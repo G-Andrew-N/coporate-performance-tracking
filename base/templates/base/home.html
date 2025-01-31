@@ -1,0 +1,44 @@
+{%extends 'main.html'%}
+
+{%block content%}
+
+
+
+<a href="{% url 'login' %}"> login </a>
+<div class="chart-container">
+    <h2>Sales Volume Trends</h2>
+    <img src="{{ sales_chart }}" alt="Sales Volume Trends">
+</div>
+
+<div class="chart-container">
+    <h2>Productivity Trends</h2>
+    <img src="{{ productivity_chart }}" alt="Productivity Trends">
+</div>
+
+<div class="chart-container">
+    <h2>Revenue Trends</h2>
+    <img src="{{ revenue_chart }}" alt="Revenue Trends">
+</div>
+
+<div class="table-container">
+    <h2>Agent Performance</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Agent</th>
+                <th>Role</th>
+                <th>Average Customer Satisfaction</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for agent in agent_performance %}
+            <tr>
+                <td>{{ agent.user.get_full_name }}</td>
+                <td>{{ agent.role }}</td>
+                <td>{{ agent.avg_score|default:"N/A" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{%endblock%}

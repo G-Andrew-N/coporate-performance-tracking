@@ -1,0 +1,202 @@
+<!-- navbar.html -->
+<nav class="navbar">
+    <div class="navbar-container">
+        <div class="navbar-brand">
+            <a href="{% url 'home' %}">
+                Real Estate PMS
+            </a>
+        </div>
+        
+        {% if user.is_authenticated %}
+            <div class="navbar-links">
+                {% if user.is_staff %}
+                    <a href="{% url 'home' %}" class="nav-link">Dashboard</a>
+                    <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
+                    <a href="{% url 'employee_list' %}" class="nav-link">Employees</a>
+                    <a href="{% url 'assign_task' %}" class="nav-link">Tasks</a>
+                {% else %}
+                    <a href="{% url 'agent_workpage' %}" class="nav-link">My Workspace</a>
+                    <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
+                {% endif %}
+            </div>
+            
+            <div class="navbar-user">
+                <div class="user-menu">
+                    <button class="user-button">
+                        {{ user.get_full_name }}
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'user_profile' %}" class="dropdown-item">Profile</a>
+                        
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="navbar-links">
+                <a href="{% url 'login' %}" class="nav-link">Login</a>
+            </div>
+        {% endif %}
+
+        <button class="mobile-menu-button">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+    </div>
+</nav>
+
+<style>
+    /* Navbar Styles */
+    .navbar {
+        background-color: var(--primary-color);
+        padding: 1rem 0;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .navbar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .navbar-brand a {
+        color: var(--light-text);
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    
+    .navbar-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+    
+    .nav-link {
+        color: var(--light-text);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+    }
+    
+    .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--light-text);
+    }
+    
+    /* User Menu Styles */
+    .navbar-user {
+        position: relative;
+    }
+    
+    .user-button {
+        background: transparent;
+        border: none;
+        color: var(--light-text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+    
+    .dropdown-arrow {
+        font-size: 0.8rem;
+    }
+    
+    .dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        min-width: 200px;
+        display: none;
+        margin-top: 0.5rem;
+    }
+    
+    .user-menu:hover .dropdown-menu {
+        display: block;
+    }
+    
+    .dropdown-item {
+        display: block;
+        padding: 0.75rem 1rem;
+        color: var(--text-color);
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+    
+    .dropdown-item:hover {
+        background-color: var(--background-light);
+    }
+    
+    /* Mobile Menu Button */
+    .mobile-menu-button {
+        display: none;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+    }
+    
+    .bar {
+        display: block;
+        width: 25px;
+        height: 3px;
+        margin: 5px 0;
+        background-color: var(--light-text);
+        transition: transform 0.3s ease;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .mobile-menu-button {
+            display: block;
+        }
+    
+        .navbar-links, .navbar-user {
+            display: none;
+        }
+    
+        .navbar-links.active, .navbar-user.active {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--primary-color);
+            padding: 1rem;
+        }
+    
+        .navbar-links.active {
+            gap: 1rem;
+        }
+    
+        .dropdown-menu {
+            position: static;
+            box-shadow: none;
+            margin-top: 0;
+        }
+    
+        .user-menu:hover .dropdown-menu {
+            display: none;
+        }
+    
+        .user-menu.active .dropdown-menu {
+            display: block;
+        }
+    }
+</style>

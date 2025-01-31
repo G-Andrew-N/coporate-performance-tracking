@@ -1,0 +1,35 @@
+{% extends 'main.html' %}
+
+{% block content %}
+    <h1>Edit Employee</h1>
+    <a href="{% url 'employee_list' %}">Back to Employee List</a>
+
+    <!-- Display Messages -->
+    {% if messages %}
+        <div>
+            {% for message in messages %}
+                <div class="{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="first_name">First Name:</label>
+        <input type="text" name="first_name" id="first_name" value="{{ employee.user.first_name }}" required><br>
+
+        <label for="last_name">Last Name:</label>
+        <input type="text" name="last_name" id="last_name" value="{{ employee.user.last_name }}" required><br>
+
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" value="{{ employee.user.email }}" required><br>
+
+        <label for="role">Role:</label>
+        <input type="text" name="role" id="role" value="{{ employee.role }}" required><br>
+
+        <label for="join_date">Join Date:</label>
+        <input type="date" name="join_date" id="join_date" value="{{ employee.join_date|date:'Y-m-d' }}" required><br>
+
+        <button type="submit">Update Employee</button>
+    </form>
+{%endblock%}

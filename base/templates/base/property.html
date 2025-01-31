@@ -1,0 +1,113 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<h1>Property Management</h1>
+
+<!-- Search Bar -->
+<form method="get" action="{% url 'property_list' %}" class="search-form">
+    <input type="text" name="q" placeholder="Search properties..." value="{{ request.GET.q }}">
+    <button type="submit">Search</button>
+</form>
+
+<!-- Property List View -->
+{% if view_mode == "list" %}
+    <div class="property-list-actions">
+        <a href="{% url 'property_add' %}" class="btn">Add New Property</a>
+        <a href="{% url 'export_properties' %}" class="btn">Export Properties to CSV</a>
+    </div>
+
+    <ul class="property-list">
+        {% for property in page_obj %}
+            <li class="property-item">
+                <a href="{% url 'property_detail' property.id %}">{{ property.address }}</a> - {{ property.propertyType }}
+                <div class="property-actions">
+                    <a href="{% url 'property_edit' property.id %}" class="btn">Edit</a>
+                    <a href="{% url 'property_delete' property.id %}" class="btn">Delete</a>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Pagination Controls -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1" class="btn">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="btn">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+{% endif %}
+
+<!-- Property Detail View -->
+{% if view_mode == "detail" %}
+    <div class="property-detail">
+        <h2>Details for {{ property.address }}</h2>
+        {% if property.image %}
+            <img src="{{ property.image.url }}" alt="{{ property.address }}" class="property-image">
+        {% endif %}
+        <p><strong>Type:</strong> {{ property.propertyType }}</p>
+        <p><strong>Location:</strong> {{ property.location }}</p>
+        <p><strong>Address:</strong> {{ property.address }}</p>
+        <p><strong>Floors:</strong> {{ property.floors }}</p>
+        <p><strong>Covered Area:</strong> {{ property.coveredArea }}</p>
+        <p><strong>Electricity Status:</strong> {{ property.electricityStatus }}</p>
+        <p><strong>Bathrooms:</strong> {{ property.bathroomCount }}</p>
+        <p><strong>Bedrooms:</strong> {{ property.bedroomCount }}</p>
+        <p><strong>Booking Amount:</strong> {{ property.bookingAmount }}</p>
+        <p><strong>Price:</strong> {{ property.price }}</p>
+        <p><strong>Status:</strong> {{ property.status }}</p>
+
+        <!-- Update Status Form -->
+        <form method="post" action="{% url 'update_property_status' property.id %}" class="status-form">
+            {% csrf_token %}
+            <label for="status">Update Status:</label>
+            <select name="status" id="status">
+                {% for value, label in property.STATUS_CHOICES %}
+                    <option value="{{ value }}" {% if value == property.status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn">Update</button>
+        </form>
+
+        <a href="{% url 'property_list' %}" class="btn">Back to List</a>
+    </div>
+{% endif %}
+
+<!-- Add/Edit Property Form -->
+{% if view_mode == "add" or view_mode == "edit" %}
+    <div class="property-form">
+        <h2>{% if view_mode == "add" %}Add Property{% else %}Edit Property{% endif %}</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn">
+                {% if view_mode == "add" %} Add {% else %} Save Changes {% endif %}
+            </button>
+        </form>
+        <a href="{% url 'property_list' %}" class="btn">Back to List</a>
+    </div>
+{% endif %}
+
+<!-- Delete Property Confirmation -->
+{% if view_mode == "delete" %}
+    <div class="delete-confirmation">
+        <h2>Delete Property</h2>
+        <p>Are you sure you want to delete "{{ property.address }}"?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn">Yes, Delete</button>
+        </form>
+        <a href="{% url 'property_list' %}" class="btn">Cancel</a>
+    </div>
+{% endif %}
+{% endblock %}

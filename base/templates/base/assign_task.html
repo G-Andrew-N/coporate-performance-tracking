@@ -1,0 +1,80 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<body>
+    <h1>Assign Tasks to Agents</h1>
+
+    <!-- Display Messages -->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Assign Task Form -->
+    <form method="post">
+        {% csrf_token %}
+        <label for="predefined_task">Select Task:</label>
+        <select name="predefined_task_id" id="predefined_task" required>
+            <option value="" disabled selected>Select a task</option>
+            {% for task in predefined_tasks %}
+                <option value="{{ task.id }}">{{ task.title }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="employee">Assign to Agent:</label>
+        <select name="employee_id" id="employee" required>
+            <option value="" disabled selected>Select an agent</option>
+            {% for agent in agents %}
+                <option value="{{ agent.id }}">{{ agent.user.get_full_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="due_date">Due Date:</label>
+        <input type="date" name="due_date" id="due_date" required>
+
+        <button type="submit">Assign Task</button>
+    </form>
+
+    <!-- Display Assigned Tasks -->
+    <div class="task-list">
+        <h2>Assigned Tasks</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Assigned To</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in assigned_tasks %}
+                    <tr>
+                        <td>{{ task.title }}</td>
+                        <td>{{ task.assigned_to.user.get_full_name }}</td>
+                        <td>{{ task.due_date }}</td>
+                        <td>{{ task.status }}</td>
+                        <td class="actions">
+                            <!-- Edit Button -->
+                            <a href="{% url 'edit_task' task.id %}" class="btn-edit">Edit</a>
+                            <!-- Delete Button -->
+                            <form action="{% url 'delete_task' task.id %}" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-delete">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">No tasks have been assigned yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+{% endblock %}
