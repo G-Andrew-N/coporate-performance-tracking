@@ -1,0 +1,284 @@
+body{
+    background-color: #b3ddf2;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.container {
+    margin: 20px;
+    background: #f1f9ff; /* Lightened container background */
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+
+
+.nav-wrapper {
+    background-color: #004080;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline-block;
+    margin-right: 20px;
+}
+nav ul li a {
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+nav ul li a:hover {
+    background-color: #0056b3;
+    color: #ffffff;
+}
+
+
+
+
+
+h3 {
+    font-size: 1.5rem;
+    color: #003c7e;
+}
+
+p {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+span {
+    font-size: 0.9rem;
+}
+
+
+
+
+
+
+.overview {
+    display: flex;
+    justify-content: space-between;
+    padding: 25px;
+    padding-bottom: 40px;
+    background: linear-gradient(135deg, #e1efff, #b3d7f2);
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.metrics {
+    width: 40%;
+    background: linear-gradient(135deg, #e1efff, #b3d7f2);
+    border: 1px solid #0056b3;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    margin-right: 20px; /* Add space between metrics and charts */
+}
+
+.metrics div {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.metrics div span:first-child {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #003c7e;
+}
+
+.metrics div span:last-child {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #0056b3;
+}
+
+.pcharts{
+    width: 40%;
+    background-color: #e1efff;
+    border: 1px solid #0056b3;
+    padding: 20px;
+    border-radius: 20px;
+}
+.user_management{
+    background-color: #f5f9ff;
+    
+}
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-group button {
+    padding: 12px 25px;
+    background-color: #0073e6; /* Brighter blue */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button-group button:hover {
+    background-color: #0056b3;
+}
+/* Table Styling */
+table {
+    width: 100%;
+    margin: 20px 0;
+    padding: 20px; /* Add padding around the table */
+    background-color: #f9f9f9; /* Light grey background for the entire table */
+    border-radius: 10px;
+    border-collapse: separate;
+    border-spacing: 0 10px; /* Space between rows */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    
+    overflow-x: auto;
+    display: block;
+    white-space: nowrap;
+}
+
+table th {
+    background-color: #0073e6; /* Lighter blue for header */
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 1.1rem;
+    border-radius: 10px;
+}
+
+table td {
+    padding: 12px;
+    text-align: center;
+    background-color: #ffffff; /* White background for table cells */
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+table tr:nth-child(even) td {
+    background-color: #f1f9ff; /* Light blue background for alternate rows */
+}
+
+table tr:hover td {
+    background-color: #e1efff; /* Light hover effect */
+}
+
+/* Additional Table Header Styling */
+table th {
+    font-weight: bold;
+    text-transform: uppercase; /* Capitalize header text */
+}
+
+/* Add a subtle border between rows */
+table, th, td {
+    border: 1px solid #ddd; /* Light border between cells */
+}
+
+
+table, th, td {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+
+.logs{
+    background-color: #f0f8ff;
+}
+
+@media only screen and (max-width: 768px) {
+    .container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .overview {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .metrics, .pcharts {
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .nav-wrapper nav ul li {
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .metrics div span:first-child {
+        font-size: 0.9rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    table {
+        padding: 10px;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .nav-wrapper {
+        padding: 10px;
+    }
+
+    .metrics, .pcharts {
+        padding: 15px;
+    }
+
+    .metrics div {
+        padding: 10px;
+    }
+
+    .button-group button {
+        width: 100%;
+        padding: 12px 0;
+    }
+
+    table th, table td {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .user_management table {
+        font-size: 0.85rem;
+    }
+}
+
+
+@media only screen and (max-width: 768px) {
+    nav ul {
+        display: block;
+        text-align: center;
+    }
+    nav ul li {
+        margin: 10px 0;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .button-group {
+        flex-direction: column;
+    }
+
+    .button-group button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
