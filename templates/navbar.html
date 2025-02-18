@@ -9,10 +9,9 @@
             {% if user.is_authenticated %}
                 <div class="navbar-links">
                     {% if user.is_staff %}
-                        <a href="{% url 'admin_panel' %}" class="nav-link">Dashboard</a>
+                        
                         <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
-                        <a href="{% url 'employee_list' %}" class="nav-link">Employees</a>
-                        <a href="{% url 'assign_task' %}" class="nav-link">Tasks</a>
+                        
                     {% else %}
                         <a href="{% url 'agent_workpage' %}" class="nav-link">My Workspace</a>
                         <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
