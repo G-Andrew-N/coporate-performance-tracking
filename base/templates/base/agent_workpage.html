@@ -1,145 +1,140 @@
 {% extends 'main.html' %}
 
-
-
-
-
 {% block content %}
-<div class="agent-workspace">
-    <h1>Welcome, {{ request.user.get_full_name }} (Agent)</h1>
+    <div class="workspace-container">
+        <h1>Welcome, {{ request.user.get_full_name }} (Agent)</h1>
+        <a href="{% url 'user_profile' %}" class="profile-link">View Profile</a>
 
-    <a href="{%url 'user_profile'%}">view profile</a>
+        <!-- Section 1: Tasks Assigned -->
+        <div class="tasks-section">
+            <h2>Your Tasks</h2>
+            <table class="tasks-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Priority</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.title }}</td>
+                        <td>{{ task.description }}</td>
+                        <td>{{ task.priority }}</td>
+                        <td>{{ task.due_date }}</td>
+                        <td>{{ task.status }}</td>
+                        <td>
+                            <a href="{% url 'update_task_status' task.id %}" class="action-link">Update</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">No tasks assigned.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-    <!-- Section 1: Tasks Assigned -->
-    <div class="tasks-section">
-        <h2>Your Tasks</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Priority</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for task in tasks %}
-                <tr>
-                    <td>{{ task.title }}</td>
-                    <td>{{ task.description }}</td>
-                    <td>{{ task.priority }}</td>
-                    <td>{{ task.due_date }}</td>
-                    <td>{{ task.status }}</td>
-                    <td>
-                        <a href="{% url 'update_task_status' task.id %}">Update</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6">No tasks assigned.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Section 2: Available Properties -->
+        <div class="properties-section">
+            <h2>Available Properties</h2>
+            <table class="properties-table">
+                <thead>
+                    <tr>
+                        <th>Property Type</th>
+                        <th>Location</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for property in properties %}
+                    <tr>
+                        <td>{{ property.property_type }}</td>
+                        <td>{{ property.location }}</td>
+                        <td>{{ property.price }}</td>
+                        <td>{{ property.status }}</td>
+                        <td>
+                            <a href="{% url 'make_sale' property.id %}" class="action-link">Make Sale</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No properties available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 3: Performance Metrics -->
+        <div class="performance-section">
+            <h2>Your Performance</h2>
+            <ul class="performance-list">
+                <li><strong>Tasks Completed:</strong> {{ performance_metrics.tasks_completed }}</li>
+                <li><strong>Sales Closed:</strong> {{ performance_metrics.sales_closed }}</li>
+                <li><strong>Customer Satisfaction:</strong> {{ performance_metrics.customer_satisfaction }}%</li>
+            </ul>
+        </div>
+
+        <!-- Section 4: Productivity Tracker -->
+        <div class="productivity-section">
+            <h2>Productivity</h2>
+            <table class="productivity-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Hours Worked</th>
+                        <th>Tasks Completed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for productivity in productivity_data %}
+                    <tr>
+                        <td>{{ productivity.date }}</td>
+                        <td>{{ productivity.hours_worked }}</td>
+                        <td>{{ productivity.tasks_completed }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3">No productivity data available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 5: Sales Made -->
+        <div class="sales-section">
+            <h2>Your Sales</h2>
+            <table class="sales-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Sale Price</th>
+                        <th>Sale Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.property }}</td>
+                        <td>{{ sale.sale_price }}</td>
+                        <td>{{ sale.sale_date }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3">No sales made yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    <!-- Section 2: Available Properties -->
-    <div class="properties-section">
-        <h2>Available Properties</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Property Type</th>
-                    <th>Location</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for property in properties %}
-                <tr>
-                    <td>{{ property.property_type }}</td>
-                    <td>{{ property.location }}</td>
-                    <td>{{ property.price }}</td>
-                    <td>{{ property.status }}</td>
-                    <td>
-                        <a href="{% url 'make_sale' property.id %}">Make Sale</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5">No properties available.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Section 3: Performance Metrics -->
-    <div class="performance-section">
-        <h2>Your Performance</h2>
-        <ul>
-            <li><strong>Tasks Completed:</strong> {{ performance_metrics.tasks_completed }}</li>
-            <li><strong>Sales Closed:</strong> {{ performance_metrics.sales_closed }}</li>
-            <li><strong>Customer Satisfaction:</strong> {{ performance_metrics.customer_satisfaction }}%</li>
-        </ul>
-    </div>
-
-    <!-- Section 4: Productivity Tracker -->
-    <div class="productivity-section">
-        <h2>Productivity</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Hours Worked</th>
-                    <th>Tasks Completed</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for productivity in productivity_data %}
-                <tr>
-                    <td>{{ productivity.date }}</td>
-                    <td>{{ productivity.hours_worked }}</td>
-                    <td>{{ productivity.tasks_completed }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3">No productivity data available.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Section 5: Sales Made -->
-    <div class="sales-section">
-        <h2>Your Sales</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Sale Price</th>
-                    <th>Sale Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sale in sales %}
-                <tr>
-                    <td>{{ sale.property }}</td>
-                    <td>{{ sale.sale_price }}</td>
-                    <td>{{ sale.sale_date }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3">No sales made yet.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
 {% endblock %}

@@ -3,9 +3,19 @@
 {% block content %}
 <div class="admin-panel">
     <h1>Admin Dashboard</h1>
-    <a href="{% url 'property_list'%}">property management</a>
-    <a href="{%url 'assign_task'%}">Task allocation</a>
-    <a href="{%url 'employee_list'%}">user management</a>
+
+    <!-- Navigation Links as Icons -->
+    <div class="admin-links">
+        <a href="{% url 'property_list' %}" class="link-left">
+            <i class="fa fa-cogs"></i> Property Management
+        </a>
+        <a href="{% url 'assign_task' %}" class="link-center">
+            <i class="fa fa-tasks"></i> Task Allocation
+        </a>
+        <a href="{% url 'employee_list' %}" class="link-right">
+            <i class="fa fa-users"></i> User Management
+        </a>
+    </div>
 
     <!-- Section 1: Employee Performance Metrics -->
     <div class="employee-performance">
@@ -36,34 +46,32 @@
         </table>
     </div>
 
+    <!-- Side by Side Section: Property Status and Financial Overview -->
     <div class="side-by-side">
-        <!-- Section 2: Property Status -->
-    <div class="property-status">
-        <h2>Property Status</h2>
-        <ul>
-            <li><strong>Total Properties:</strong> {{ property_status.total_properties }}</li>
-            <li><strong>Available Properties:</strong> {{ property_status.available_properties }}</li>
-            <li><strong>Sold Properties:</strong> {{ property_status.sold_properties }}</li>
-        </ul>
-    </div>
+        <div class="property-status">
+            <h2>Property Status</h2>
+            <ul>
+                <li><strong>Total Properties:</strong> {{ property_status.total_properties }}</li>
+                <li><strong>Available Properties:</strong> {{ property_status.available_properties }}</li>
+                <li><strong>Sold Properties:</strong> {{ property_status.sold_properties }}</li>
+            </ul>
+        </div>
 
-    <!-- Section 3: Financial Overview -->
-    <div class="financial-overview">
-        <h2>Financial Overview</h2>
-        <ul>
-            <li><strong>Total Revenue:</strong> {{ financial_overview.total_revenue }}</li>
-            <li><strong>Total Expenses:</strong> {{ financial_overview.total_expenses }}</li>
-            <li><strong>Net Profit:</strong> {{ financial_overview.net_profit }}</li>
-        </ul>
+        <div class="financial-overview">
+            <h2>Financial Overview</h2>
+            <ul>
+                <li><strong>Total Revenue:</strong> {{ financial_overview.total_revenue }}</li>
+                <li><strong>Total Expenses:</strong> {{ financial_overview.total_expenses }}</li>
+                <li><strong>Net Profit:</strong> {{ financial_overview.net_profit }}</li>
+            </ul>
+        </div>
     </div>
-    
-    </div>
-
-    
 
     <!-- Section 4: Recent Activities -->
     <div class="recent-activities">
         <h2>Recent Activities</h2>
+        
+        <!-- Recent Sales -->
         <div class="recent-sales">
             <h3>Recent Sales</h3>
             <table>
@@ -89,6 +97,8 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Recent Tasks -->
         <div class="recent-tasks">
             <h3>Recent Tasks</h3>
             <table>

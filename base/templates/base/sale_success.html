@@ -1,36 +1,40 @@
 {% extends 'main.html' %}
 
 {% block content %}
-<h1>Sale Successful!</h1>
-<p>{{ message }}</p>
+    <section class="sale-confirmation">
+        <h1>Sale Successful!</h1>
+        <p>{{ message }}</p>
+    </section>
 
-<h2>Transaction History</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Property</th>
-            <th>Sale Price</th>
-            <th>Profit</th>
-            <th>Status</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for sale in sales %}
-        <tr>
-            <td>{{ sale.property }}</td>
-            <td>{{ sale.sale_price }}</td>
-            <td>{{ sale.profit }}</td>
-            <td>{{ sale.transaction_status }}</td>
-            <td>{{ sale.sale_date }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">No transactions found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <section class="transaction-history">
+        <h2>Transaction History</h2>
+        <table class="transaction-table">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Sale Price</th>
+                    <th>Profit</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td>{{ sale.property }}</td>
+                    <td>${{ sale.sale_price|floatformat:2 }}</td>
+                    <td>${{ sale.profit|floatformat:2 }}</td>
+                    <td>{{ sale.transaction_status }}</td>
+                    <td>{{ sale.sale_date }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No transactions found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
 
-<a href="{% url 'agent_workpage' %}">Back to Workpage</a>
+    <a href="{% url 'agent_workpage' %}" class="btn">Back to Workpage</a>
 {% endblock %}

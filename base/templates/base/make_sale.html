@@ -1,16 +1,25 @@
 {% extends 'main.html' %}
 
 {% block content %}
-<h1>Make Sale for {{ property.property_type }} - {{ property.location }}</h1>
-<form method="POST">
-    {% csrf_token %}
-    <label for="sale_price">Sale Price:</label>
-    <input type="number" name="sale_price" id="sale_price" step="0.01" required>
-    <button type="submit">Confirm Sale</button>
-</form>
-<a href="{% url 'property_list' %}">Cancel</a>
+    <div class="container">
+        <h1>Make Sale for {{ property.property_type }} - {{ property.location }}</h1>
 
-{% if error %}
-<p style="color: red;">{{ error }}</p>
-{% endif %}
+        <form method="POST" class="sale-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="sale_price">Sale Price:</label>
+                <input type="number" name="sale_price" id="sale_price" step="0.01" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn confirm-btn">Confirm Sale</button>
+                <a href="{% url 'property_list' %}" class="btn cancel-btn">Cancel</a>
+            </div>
+        </form>
+
+        {% if error %}
+            <p class="error-message">{{ error }}</p>
+        {% endif %}
+    </div>
 {% endblock %}

@@ -9,55 +9,99 @@
 
         <section>
             <h2>Performance Summary</h2>
-            <p>Tasks Completed: {{ performance_metrics.tasks_completed }}</p>
-            <p>Sales Closed: {{ performance_metrics.sales_closed }}</p>
-            <p>Customer Satisfaction: {{ performance_metrics.customer_satisfaction }}%</p>
+            <p><strong>Tasks Completed:</strong> {{ performance_metrics.tasks_completed }}</p>
+            <p><strong>Sales Closed:</strong> {{ performance_metrics.sales_closed }}</p>
+            <p><strong>Customer Satisfaction:</strong> {{ performance_metrics.customer_satisfaction }}%</p>
         </section>
 
         <section>
             <h2>Task Status Overview</h2>
-            <canvas id="taskStatusChart" width="400" height="200"></canvas>
+            <canvas id="taskStatusChart"></canvas>
         </section>
 
         <section>
             <h2>Revenue Summary</h2>
-            <canvas id="revenueChart" width="400" height="200"></canvas>
+            <canvas id="revenueChart"></canvas>
         </section>
 
         <section>
             <h2>Recent Sales</h2>
-            <ul>
-                {% for sale in sales %}
-                    <li>{{ sale.property }} - ${{ sale.sale_price }} ({{ sale.transaction_status }})</li>
-                {% endfor %}
-            </ul>
+            {% if sales %}
+                <ul>
+                    {% for sale in sales %}
+                        <li>{{ sale.property }} - ${{ sale.sale_price }} ({{ sale.transaction_status }})</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No recent sales.</p>
+            {% endif %}
         </section>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const taskStatusChart = new Chart(document.getElementById('taskStatusChart'), {
-            type: 'pie',
-            data: {
-                labels: ['Pending', 'Completed', 'Overdue'],
-                datasets: [{
-                    label: 'Task Status',
-                    data: {{ task_status_counts|safe }},
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                }]
+        document.addEventListener("DOMContentLoaded", function () {
+            // Task Status Pie Chart
+            let taskStatusCtx = document.getElementById("taskStatusChart").getContext("2d");
+            let taskStatusData = {{ task_status_counts|safe }};
+            
+            if (taskStatusData.length > 0) {
+                new Chart(taskStatusCtx, {
+                    type: "pie",
+                    data: {
+                        labels: ["Pending", "Completed", "Overdue"],
+                        datasets: [{
+                            label: "Task Status",
+                            data: taskStatusData,
+                            backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: "bottom" },
+                            tooltip: { enabled: true }
+                        }
+                    }
+                });
             }
-        });
 
-        const revenueChart = new Chart(document.getElementById('revenueChart'), {
-            type: 'line',
-            data: {
-                labels: {{ revenue_data.labels|safe }},
-                datasets: [{
-                    label: 'Net Profit',
-                    data: {{ revenue_data.net_profits|safe }},
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    fill: false,
-                }]
+            // Revenue Line Chart
+            let revenueCtx = document.getElementById("revenueChart").getContext("2d");
+            let revenueLabels = {{ revenue_data.labels|safe }};
+            let revenueValues = {{ revenue_data.net_profits|safe }};
+
+            if (revenueLabels.length > 0 && revenueValues.length > 0) {
+                new Chart(revenueCtx, {
+                    type: "line",
+                    data: {
+                        labels: revenueLabels,
+                        datasets: [{
+                            label: "Net Profit",
+                            data: revenueValues,
+                            borderColor: "rgba(75, 192, 192, 1)",
+                            backgroundColor: "rgba(75, 192, 192, 0.2)",
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: "rgba(200, 200, 200, 0.2)" }
+                            }
+                        },
+                        plugins: {
+                            tooltip: { enabled: true },
+                            legend: { display: false }
+                        }
+                    }
+                });
             }
         });
     </script>
-{%endblock%}
+{% endblock %}

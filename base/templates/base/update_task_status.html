@@ -1,18 +1,24 @@
 {% extends 'main.html' %}
 
 {% block content %}
-<h1>Update Task Status</h1>
-<form method="POST">
-    {% csrf_token %}
-    <label for="status">Status:</label>
-    <select name="status" id="status">
-        {% for choice in task.STATUS_CHOICES %}
-            <option value="{{ choice.0 }}" {% if choice.0 == task.status %}selected{% endif %}>
-                {{ choice.1 }}
-            </option>
-        {% endfor %}
-    </select>
-    <button type="submit">Update</button>
-</form>
-<a href="{% url 'agent_workpage' %}">Cancel</a>
+    <div class="update-task-container">
+        <h1>Update Task Status</h1>
+        <form method="POST" class="update-form">
+            {% csrf_token %}
+            
+            <label for="status"><strong>Status:</strong></label>
+            <select name="status" id="status" class="status-dropdown">
+                {% for choice in task.STATUS_CHOICES %}
+                    <option value="{{ choice.0 }}" {% if choice.0 == task.status %}selected{% endif %}>
+                        {{ choice.1 }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <div class="form-actions">
+                <button type="submit" class="btn update-btn">Update</button>
+                <a href="{% url 'agent_workpage' %}" class="btn cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}

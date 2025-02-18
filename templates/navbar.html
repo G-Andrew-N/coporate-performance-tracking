@@ -2,43 +2,40 @@
 <nav class="navbar">
     <div class="navbar-container">
         <div class="navbar-brand">
-            <a href="{% url 'home' %}">
-                Real Estate PMS
-            </a>
+            <a href="{% url 'home' %}">Real Estate PMS</a>
         </div>
-        
-        {% if user.is_authenticated %}
-            <div class="navbar-links">
-                {% if user.is_staff %}
-                    <a href="{% url 'home' %}" class="nav-link">Dashboard</a>
-                    <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
-                    <a href="{% url 'employee_list' %}" class="nav-link">Employees</a>
-                    <a href="{% url 'assign_task' %}" class="nav-link">Tasks</a>
-                {% else %}
-                    <a href="{% url 'agent_workpage' %}" class="nav-link">My Workspace</a>
-                    <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
-                {% endif %}
-            </div>
-            
-            <div class="navbar-user">
-                <div class="user-menu">
-                    <button class="user-button">
-                        {{ user.get_full_name }}
-                        <span class="dropdown-arrow">▼</span>
-                    </button>
-                    <div class="dropdown-menu">
-                        <a href="{% url 'user_profile' %}" class="dropdown-item">Profile</a>
-                        
+
+        <div class="menu-wrapper">
+            {% if user.is_authenticated %}
+                <div class="navbar-links">
+                    {% if user.is_staff %}
+                        <a href="{% url 'admin_panel' %}" class="nav-link">Dashboard</a>
+                        <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
+                        <a href="{% url 'employee_list' %}" class="nav-link">Employees</a>
+                        <a href="{% url 'assign_task' %}" class="nav-link">Tasks</a>
+                    {% else %}
+                        <a href="{% url 'agent_workpage' %}" class="nav-link">My Workspace</a>
+                        <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
+                    {% endif %}
+                </div>
+                
+                <div class="navbar-user">
+                    <div class="user-menu">
+                        <button class="user-button">{{ user.get_full_name }} ▼</button>
+                        <div class="dropdown-menu">
+                            <a href="{% url 'user_profile' %}" class="dropdown-item">Profile</a>
+                            
+                        </div>
                     </div>
                 </div>
-            </div>
-        {% else %}
-            <div class="navbar-links">
-                <a href="{% url 'login' %}" class="nav-link">Login</a>
-            </div>
-        {% endif %}
+            {% else %}
+                <div class="navbar-links">
+                    <a href="{% url 'login' %}" class="nav-link">Login</a>
+                </div>
+            {% endif %}
+        </div>
 
-        <button class="mobile-menu-button">
+        <button class="mobile-menu-button" onclick="toggleMenu()">
             <span class="bar"></span>
             <span class="bar"></span>
             <span class="bar"></span>
@@ -47,83 +44,76 @@
 </nav>
 
 <style>
-    /* Navbar Styles */
+    /* General Navbar Styling */
     .navbar {
-        background-color: var(--primary-color);
-        padding: 1rem 0;
+        background-color: #2C3E50;
+        padding: 1rem 2rem;
         position: sticky;
         top: 0;
+        width: 100%;
         z-index: 1000;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
     
     .navbar-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
     }
     
     .navbar-brand a {
-        color: var(--light-text);
-        font-size: 1.5rem;
-        font-weight: 700;
+        color: #ECF0F1;
+        font-size: 1.8rem;
+        font-weight: bold;
         text-decoration: none;
     }
     
     .navbar-links {
         display: flex;
-        gap: 2rem;
-        align-items: center;
+        gap: 1.5rem;
     }
     
     .nav-link {
-        color: var(--light-text);
+        color: #ECF0F1;
         text-decoration: none;
+        font-size: 1rem;
         font-weight: 500;
         padding: 0.5rem 1rem;
-        border-radius: 4px;
-        transition: background-color 0.3s ease;
+        transition: 0.3s;
     }
     
     .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        color: var(--light-text);
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
     }
-    
-    /* User Menu Styles */
+
+    /* User Dropdown Menu */
     .navbar-user {
         position: relative;
     }
     
     .user-button {
-        background: transparent;
+        background: none;
         border: none;
-        color: var(--light-text);
+        color: #ECF0F1;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-    }
-    
-    .dropdown-arrow {
-        font-size: 0.8rem;
     }
     
     .dropdown-menu {
+        display: none;
         position: absolute;
         right: 0;
         top: 100%;
         background: white;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        min-width: 200px;
-        display: none;
-        margin-top: 0.5rem;
+        border-radius: 5px;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        min-width: 150px;
     }
     
     .user-menu:hover .dropdown-menu {
@@ -133,22 +123,21 @@
     .dropdown-item {
         display: block;
         padding: 0.75rem 1rem;
-        color: var(--text-color);
+        color: #2C3E50;
         text-decoration: none;
-        transition: background-color 0.3s ease;
+        transition: background 0.3s;
     }
     
     .dropdown-item:hover {
-        background-color: var(--background-light);
+        background: #ECF0F1;
     }
     
-    /* Mobile Menu Button */
+    /* Mobile Menu */
     .mobile-menu-button {
         display: none;
-        background: transparent;
+        background: none;
         border: none;
         cursor: pointer;
-        padding: 0.5rem;
     }
     
     .bar {
@@ -156,8 +145,7 @@
         width: 25px;
         height: 3px;
         margin: 5px 0;
-        background-color: var(--light-text);
-        transition: transform 0.3s ease;
+        background-color: #ECF0F1;
     }
     
     /* Responsive Design */
@@ -165,38 +153,26 @@
         .mobile-menu-button {
             display: block;
         }
-    
-        .navbar-links, .navbar-user {
+        
+        .menu-wrapper {
             display: none;
-        }
-    
-        .navbar-links.active, .navbar-user.active {
-            display: flex;
             flex-direction: column;
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
-            background-color: var(--primary-color);
+            background: #2C3E50;
             padding: 1rem;
         }
-    
-        .navbar-links.active {
-            gap: 1rem;
-        }
-    
-        .dropdown-menu {
-            position: static;
-            box-shadow: none;
-            margin-top: 0;
-        }
-    
-        .user-menu:hover .dropdown-menu {
-            display: none;
-        }
-    
-        .user-menu.active .dropdown-menu {
-            display: block;
+        
+        .menu-wrapper.active {
+            display: flex;
         }
     }
 </style>
+
+<script>
+    function toggleMenu() {
+        document.querySelector('.menu-wrapper').classList.toggle('active');
+    }
+</script>
