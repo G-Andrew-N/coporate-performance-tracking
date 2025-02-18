@@ -57,7 +57,7 @@
                 <tbody>
                     {% for task in assigned_tasks %}
                         <tr>
-                            <td>{{ task.title }}</td>
+                            <td>{{ task.predefined_task }}</td>
                             <td>{{ task.assigned_to.user.get_full_name }}</td>
                             <td>{{ task.due_date }}</td>
                             <td>{{ task.status }}</td>

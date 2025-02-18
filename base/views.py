@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Q
-from .models import PropertyListing, Task, Sale, Employee, PerformanceMetrics, ProductivityTracker, Revenue, PredefinedTask
+from .models import PropertyListing, Task, Salez, Employee, PerformanceMetrics, ProductivityTracker, Revenue, PredefinedTask
 from .forms import PropertyListingForm
 from uuid import UUID
 from django.db import models  # Add this import
@@ -16,66 +16,63 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User, Group
 from datetime import datetime
 from django.urls import reverse
-
+from django.core.paginator import Paginator
 
 
 from django.shortcuts import render
 from django.db.models import Avg, Sum, Count
-from .models import Employee, SalesRecord, ProductivityTracker, Revenue, PerformanceMetrics
+from .models import Employee, ProductivityTracker, Revenue, PerformanceMetrics
 
 import matplotlib.pyplot as plt
 import io
 import urllib, base64
 
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
+
 def generate_chart(x, y, title, xlabel, ylabel):
-    plt.figure(figsize=(10, 5))
-    plt.plot(x, y, marker='o')
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.grid()
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
     
-    buf = io.BytesIO()
+    # Save plot to a BytesIO object
+    buf = BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
-    string = base64.b64encode(buf.read())
-    buf.close()
-    plt.close()
-    return 'data:image/png;base64,' + urllib.parse.quote(string)
+    
+    # Convert to base64 encoding for embedding in HTML
+    chart_data = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close(fig)  # Close the plot to free up resources
+    
+    return chart_data
+
 
 def home(request):
-    # Agent Performance Metrics
-    agent_performance = Employee.objects.annotate(avg_score=Avg('performancemetrics__customer_satisfaction'))
-
-    # Trade Volume Trends
+    # Generate charts
     sales_by_month = SalesRecord.objects.values('sale_date__month').annotate(total_sales=Sum('sale_price')).order_by('sale_date__month')
     months = [record['sale_date__month'] for record in sales_by_month]
     sales = [record['total_sales'] for record in sales_by_month]
-    
     sales_chart = generate_chart(months, sales, "Monthly Sales Volume", "Month", "Sales Volume")
 
-    # Productivity Trends
     productivity_data = ProductivityTracker.objects.values('date').annotate(total_hours=Sum('hours_worked')).order_by('date')
     dates = [record['date'] for record in productivity_data]
     hours = [record['total_hours'] for record in productivity_data]
-    
     productivity_chart = generate_chart(dates, hours, "Productivity Over Time", "Date", "Hours Worked")
 
-    # Revenue Trends
     revenue_data = Revenue.objects.values('year', 'month').annotate(total_revenue=Sum('total_revenue')).order_by('year', 'month')
     revenue_months = [f"{record['year']}-{record['month']:02d}" for record in revenue_data]
     revenues = [record['total_revenue'] for record in revenue_data]
-    
     revenue_chart = generate_chart(revenue_months, revenues, "Revenue Trends", "Time", "Revenue")
 
     context = {
         'sales_chart': sales_chart,
         'productivity_chart': productivity_chart,
         'revenue_chart': revenue_chart,
-        'agent_performance': agent_performance,
     }
 
     return render(request, 'base/home.html', context)
+
 
 
 
@@ -406,40 +403,92 @@ def update_task_status(request, task_id):
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 # Make Sale View
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from datetime import datetime
+ # Ensure correct imports
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from datetime import datetime
+from decimal import Decimal
+from .models import PropertyListing, Salez, Employee
+
 @login_required
 def make_sale(request, property_id):
-    # Fetch the property
-    property = get_object_or_404(PropertyListing, id=property_id)
+    property = get_object_or_404(PropertyListing, pk=property_id)
 
     if request.method == 'POST':
-        # Get the sale price from the form
-        sale_price = request.POST.get('sale_price')
+        buyer_name = request.POST.get('buyer_name', 'Unknown Buyer')
+        buyer_id = request.POST.get('buyer_id', 'Unknown ID')
+        buyer_email = request.POST.get('buyer_email', 'notprovided@example.com')
+        buyer_tel = request.POST.get('buyer_tel', 'Not Provided')
+        buyer_address = request.POST.get('buyer_address', 'Not Provided')
+        payment_method = request.POST.get('payment_method', 'Cash')
+        seller_name = request.POST.get('seller_name', 'Unknown Seller')
+        seller_tel = request.POST.get('seller_tel', 'Not Provided')
+        seller_email = request.POST.get('seller_email', 'notprovided@example.com')
+        seller_address = request.POST.get('seller_address', 'Not Provided')
+        ownership_verification = request.POST.get('ownership_verification', 'Pending Verification')
 
-        # Validate the sale price
-        if not sale_price:
-            return render(request, 'base/make_sale.html', {
-                'property': property,
-                'error': 'Sale price is required.'
-            })
+        # Convert and handle empty dates safely
+        sale_date = request.POST.get('sale_date')
+        closing_date = request.POST.get('closing_date')
+        sale_date = datetime.strptime(sale_date, "%Y-%m-%d").date() if sale_date else None
+        closing_date = datetime.strptime(closing_date, "%Y-%m-%d").date() if closing_date else None
 
-        # Calculate profit (example: profit = sale_price - property price)
-        profit = float(sale_price) - float(property.price)
+        # Convert price fields safely
+        try:
+            sale_price = Decimal(request.POST.get('sale_price', '0.00'))
+            title_insurance = Decimal(request.POST.get('title_insurance', '0.00'))
+            legal_fees = Decimal(request.POST.get('legal_fees', '0.00'))
+            deposit = Decimal(request.POST.get('deposit', '0.00'))
+        except Exception as e:
+            messages.error(request, f"Invalid number format: {e}")
+            return render(request, 'base/make_sale.html', {'property': property})
 
-        # Create the Sale record
-        Sale.objects.create(
-            agent=request.user,  # Logged-in user (agent)
-            property=property,
+        # Get the logged-in user's Employee profile
+        try:
+            agent = Employee.objects.get(user=request.user)
+        except Employee.DoesNotExist:
+            messages.error(request, "You must be a registered employee to make a sale.")
+            return render(request, 'base/make_sale.html', {'property': property})
+
+        # Create a new sale record
+        sale = Sale(
+            property_listing=property,
+            agent=request.user,
+            buyer_name=buyer_name,
+            buyer_id=buyer_id,
+            buyer_email=buyer_email,
+            buyer_tel=buyer_tel,
+            buyer_address=buyer_address,
+            payment_method=payment_method,
+            seller_name=seller_name,
+            seller_tel=seller_tel,
+            seller_email=seller_email,
+            seller_address=seller_address,
+            ownership_verification=ownership_verification,
+            sale_date=sale_date,
             sale_price=sale_price,
-            profit=profit,
-            transaction_status='Successful'  # Default status
+            title_insurance=title_insurance,
+            legal_fees=legal_fees,
+            deposit=deposit,
+            closing_date=closing_date
         )
+        sale.save()
+
+        # Calculate profit
+        profit = sale.profit  # Sale model handles this via property method
 
         # Mark the property as sold
         property.status = 'Sold'
         property.save()
 
-        # Redirect to the success page
-        return redirect('sale_success')
+        # Success message
+        messages.success(request, f"Sale successful! Profit: {profit:.2f} USD.")
+        return render(request, 'base/sale_confirmation.html', {'message': f"Sale successful! Profit: {profit:.2f} USD."})
 
     return render(request, 'base/make_sale.html', {'property': property})
 
@@ -455,7 +504,7 @@ def sale_success(request):
         'sales': sales
     }
 
-    return render(request, 'base/sale_success.html', context)
+    return render(request, 'base/sale_confirmation.html', context)
 
 # Role-Based Redirect View
 @login_required
@@ -474,6 +523,9 @@ def role_based_redirect(request):
 
 
 @login_required
+
+
+
 def agent_workpage(request):
     try:
         # Get the logged-in agent
@@ -484,8 +536,11 @@ def agent_workpage(request):
     # Fetch tasks assigned to the agent
     tasks = Task.objects.filter(assigned_to=employee)
 
-    # Fetch available properties
-    properties = PropertyListing.objects.filter(status='Available')
+    # Fetch available properties and apply pagination (e.g., 10 per page)
+    property_list = PropertyListing.objects.filter(status='Available')
+    paginator = Paginator(property_list, 10)  # Show 10 properties per page
+    page_number = request.GET.get('page')
+    properties = paginator.get_page(page_number)
 
     # Fetch performance metrics for the agent
     performance_metrics = PerformanceMetrics.objects.filter(employee=employee).first()
@@ -498,7 +553,7 @@ def agent_workpage(request):
 
     context = {
         'tasks': tasks,
-        'properties': properties,
+        'properties': properties,  # Now paginated
         'performance_metrics': performance_metrics,
         'productivity_data': productivity_data,
         'sales': sales,
@@ -565,6 +620,7 @@ def admin_panel(request):
     }
 
     return render(request, 'base/admin_panel.html', context)
+
 
 
 

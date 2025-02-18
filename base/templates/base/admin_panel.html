@@ -73,7 +73,7 @@
         
         <!-- Recent Sales -->
         <div class="recent-sales">
-            <h3>Recent Sales</h3>
+            <h3>Recent Successful Sales</h3>
             <table>
                 <thead>
                     <tr>
@@ -100,11 +100,12 @@
         
         <!-- Recent Tasks -->
         <div class="recent-tasks">
-            <h3>Recent Tasks</h3>
+            <h3>Recent Task Assignments</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Task</th>
+                        <th>Specifics</th>
                         <th>Assigned To</th>
                         <th>Status</th>
                     </tr>
@@ -112,7 +113,8 @@
                 <tbody>
                     {% for task in recent_tasks %}
                     <tr>
-                        <td>{{ task.title }}</td>
+                        <td>{{ task.predefined_task }}</td>
+                        <td>{{ task.description }}</td>
                         <td>{{ task.assigned_to.user.get_full_name }}</td>
                         <td>{{ task.status }}</td>
                     </tr>

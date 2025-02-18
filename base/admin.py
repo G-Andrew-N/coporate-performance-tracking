@@ -6,12 +6,13 @@ from .models import *
 
 admin.site.register(PropertyListing)
 admin.site.register(Employee)
-admin.site.register(SalesRecord)
+
 admin.site.register(Task)
 admin.site.register(Revenue)
 admin.site.register(PerformanceMetrics)
 admin.site.register(ProductivityTracker)
-admin.site.register(Sale)
+admin.site.register(Salez)
 admin.site.register(PredefinedTask)
-class PredefinedTaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'description', 'priority')
+admin.site.register(Sale)
+
+

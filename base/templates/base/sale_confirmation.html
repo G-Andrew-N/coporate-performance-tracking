@@ -1,0 +1,10 @@
+<!-- sale_confirmation.html -->
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Sale Confirmed</h1>
+    <p>{{ message }}</p>
+    <a href="{% url 'property_list' %}" class="btn">Back to Property Listings</a>
+</div>
+{% endblock %}

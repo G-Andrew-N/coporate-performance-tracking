@@ -1,25 +1,133 @@
 {% extends 'main.html' %}
 
 {% block content %}
-    <div class="container">
-        <h1>Make Sale for {{ property.property_type }} - {{ property.location }}</h1>
+<div class="container">
+    <h1>Make Sale for {{ property.property_type }} - {{ property.location }}</h1>
 
-        <form method="POST" class="sale-form">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                <label for="sale_price">Sale Price:</label>
-                <input type="number" name="sale_price" id="sale_price" step="0.01" required>
+    <form method="POST" class="sale-form">
+        {% csrf_token %}
+        
+        <!-- Buyer Details Section -->
+        <div class="section-header">Buyer Details</div>
+        <div class="form-group">
+            <label for="buyer_name">Buyer's Name</label>
+            <input type="text" name="buyer_name" id="buyer_name" placeholder="Enter Buyer's Name" required>
+        </div>
+        <div class="form-group">
+            <label for="buyer_id">ID</label>
+            <input type="text" name="buyer_id" id="buyer_id" placeholder="Enter ID" required>
+        </div>
+        <div class="form-group">
+            <label for="buyer_email">Email</label>
+            <input type="email" name="buyer_email" id="buyer_email" placeholder="Enter Email" required>
+        </div>
+        <div class="form-group">
+            <label for="buyer_tel">TEL</label>
+            <input type="tel" name="buyer_tel" id="buyer_tel" placeholder="Enter TEL" required>
+        </div>
+        <div class="form-group">
+            <label for="buyer_address">Address</label>
+            <input type="text" name="buyer_address" id="buyer_address" placeholder="Enter Address" required>
+        </div>
+        <div class="form-group">
+            <label>Payment Method</label>
+            <div class="payment-methods">
+                <label><input type="radio" name="payment_method" value="paypal" required> PayPal</label>
+                <label><input type="radio" name="payment_method" value="mortgage" required> Mortgage</label>
+                <label><input type="radio" name="payment_method" value="card" required> Card</label>
+                <label><input type="radio" name="payment_method" value="cash" required> Cash</label>
             </div>
+        </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn confirm-btn">Confirm Sale</button>
-                <a href="{% url 'property_list' %}" class="btn cancel-btn">Cancel</a>
-            </div>
-        </form>
+        <!-- Seller Details Section -->
+        <div class="section-header">Seller Details</div>
+        <div class="form-group">
+            <label for="seller_name">Seller's Name</label>
+            <input type="text" name="seller_name" id="seller_name" placeholder="Enter Seller's Name" required>
+        </div>
+        <div class="form-group">
+            <label for="seller_tel">TEL</label>
+            <input type="tel" name="seller_tel" id="seller_tel" placeholder="Enter TEL" required>
+        </div>
+        <div class="form-group">
+            <label for="seller_email">Email</label>
+            <input type="email" name="seller_email" id="seller_email" placeholder="Enter Email" required>
+        </div>
+        <div class="form-group">
+            <label for="seller_address">Address</label>
+            <input type="text" name="seller_address" id="seller_address" placeholder="Enter Address" required>
+        </div>
+        <div class="form-group">
+            <label for="ownership_verification">Ownership Verification</label>
+            <input type="text" name="ownership_verification" id="ownership_verification" placeholder="Enter Ownership Verification" required>
+        </div>
 
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
-    </div>
+        <!-- Property Details Section -->
+        <div class="section-header">Property Details</div>
+        <div class="form-group">
+            <label for="property_type">Property Type</label>
+            <input type="text" name="property_type" id="property_type" value="{{ property.property_type }}" readonly>
+        </div>
+        <div class="form-group">
+            <label for="property_size">Property Size</label>
+            <input type="text" name="property_size" id="property_size" value="{{ property.size }}" readonly>
+        </div>
+        <div class="form-group">
+            <label for="property_location">Location</label>
+            <input type="text" name="property_location" id="property_location" value="{{ property.location }}" readonly>
+        </div>
+
+        <!-- Legal Documentation Section -->
+        <div class="section-header">Legal Documentation</div>
+        <div class="form-group">
+            <label for="title_deed">Title/Deed Number</label>
+            <input type="text" name="title_deed" id="title_deed" placeholder="Enter Title/Deed Number" required>
+        </div>
+        <div class="form-group">
+            <label for="tax_id">Tax ID</label>
+            <input type="text" name="tax_id" id="tax_id" placeholder="Enter Tax ID" required>
+        </div>
+        <div class="form-group">
+            <label for="survey_number">Survey/Plot Number</label>
+            <input type="text" name="survey_number" id="survey_number" placeholder="Enter Survey/Plot Number" required>
+        </div>
+
+        <!-- Pricing Info Section -->
+        <div class="section-header">Pricing Info</div>
+        <div class="form-group">
+            <label for="sale_date">Sale Date</label>
+            <input type="date" name="sale_date" id="sale_date" required>
+        </div>
+        <div class="form-group">
+            <label for="sale_price">Sale Price</label>
+            <input type="number" name="sale_price" id="sale_price" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label for="title_insurance">Title Insurance</label>
+            <input type="text" name="title_insurance" id="title_insurance" placeholder="Enter Title Insurance" required>
+        </div>
+        <div class="form-group">
+            <label for="legal_fees">Legal Fees</label>
+            <input type="text" name="legal_fees" id="legal_fees" placeholder="Enter Legal Fees" required>
+        </div>
+        <div class="form-group">
+            <label for="deposit">Deposit</label>
+            <input type="text" name="deposit" id="deposit" placeholder="Enter Deposit" required>
+        </div>
+        <div class="form-group">
+            <label for="closing_date">Closing Date</label>
+            <input type="date" name="closing_date" id="closing_date" required>
+        </div>
+
+        <!-- Confirm Sale Section -->
+        <div class="form-actions">
+            <button type="submit" class="btn confirm-btn">Confirm Sale</button>
+            <a href="{% url 'property_list' %}" class="btn cancel-btn">Cancel</a>
+        </div>
+    </form>
+
+    {% if error %}
+    <p class="error-message">{{ error }}</p>
+    {% endif %}
+</div>
 {% endblock %}
