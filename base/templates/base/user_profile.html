@@ -9,9 +9,8 @@
 
         <section>
             <h2>Performance Summary</h2>
-            <p><strong>Tasks Completed:</strong> {{ performance_metrics.tasks_completed }}</p>
-            <p><strong>Sales Closed:</strong> {{ performance_metrics.sales_closed }}</p>
-            <p><strong>Customer Satisfaction:</strong> {{ performance_metrics.customer_satisfaction }}%</p>
+            <p><strong>Tasks Completed:</strong> {{ performance_metrics.tasks_completed|default:"N/A" }}</p>
+            <p><strong>Sales Closed:</strong> {{ performance_metrics.sales_closed|default:"N/A" }}</p>
         </section>
 
         <section>
@@ -43,7 +42,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             // Task Status Pie Chart
             let taskStatusCtx = document.getElementById("taskStatusChart").getContext("2d");
-            let taskStatusData = {{ task_status_counts|safe }};
+            let taskStatusData = {{ task_status_counts|default:"[]"|safe }};
             
             if (taskStatusData.length > 0) {
                 new Chart(taskStatusCtx, {
@@ -69,8 +68,8 @@
 
             // Revenue Line Chart
             let revenueCtx = document.getElementById("revenueChart").getContext("2d");
-            let revenueLabels = {{ revenue_data.labels|safe }};
-            let revenueValues = {{ revenue_data.net_profits|safe }};
+            let revenueLabels = {{ revenue_data.labels|default:"[]"|safe }};
+            let revenueValues = {{ revenue_data.net_profits|default:"[]"|safe }};
 
             if (revenueLabels.length > 0 && revenueValues.length > 0) {
                 new Chart(revenueCtx, {

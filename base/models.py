@@ -93,15 +93,21 @@ class Task(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
       
     predefined_task = models.ForeignKey(PredefinedTask, on_delete=models.CASCADE)
-    
     assigned_to = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
+    
     description = models.TextField(blank=True)
     priority = models.CharField(max_length=20, choices=[('Low', 'Low'), ('Medium', 'Medium'), ('High', 'High')], blank=True)
     due_date = models.DateField()
-    status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Completed', 'Completed'), ('Overdue', 'Overdue')])
+    status = models.CharField(
+        max_length=20, 
+        choices=[('Pending', 'Pending'), ('Completed', 'Completed'), ('Overdue', 'Overdue')]
+    )
+    
+    document = models.FileField(upload_to='task_documents/', null=True, blank=True)  # New field
 
     def __str__(self):
         return f"{self.predefined_task.title} ({self.status})"
+
 
     def save(self, *args, **kwargs):
         # Ensure that when a predefined_task is set, the priority and description are updated
@@ -111,40 +117,11 @@ class Task(models.Model):
         super(Task, self).save(*args, **kwargs)  # Save the object after filling the fields
 
 
-from django.db import models
 
-class Salez(models.Model):
-    property_listing = models.ForeignKey(PropertyListing, on_delete=models.CASCADE)
-    agent = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # Fix field name
-    buyer_name = models.CharField(max_length=100, default="Unknown Buyer")
-    buyer_id = models.CharField(max_length=100, default="Unknown ID")
-    buyer_email = models.EmailField(null=True, blank=True, default="notprovided@example.com")
-    buyer_tel = models.CharField(max_length=20, default="Not Provided")
-    buyer_address = models.TextField(default="Not Provided")
-    payment_method = models.CharField(max_length=20, default="Cash")
-    seller_name = models.CharField(max_length=100, default="Unknown Seller")
-    seller_tel = models.CharField(max_length=20, default="Not Provided")
-    seller_email = models.EmailField(null=True, blank=True, default="notprovided@example.com")
-    seller_address = models.TextField(default="Not Provided")
-    ownership_verification = models.CharField(max_length=100, default="Pending Verification")
-    sale_date = models.DateField(null=True, blank=True)
-    sale_price = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    title_insurance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    legal_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    deposit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    closing_date = models.DateField(null=True, blank=True)
-
-    @property
-    def profit(self):
-        if self.property_listing and self.sale_price:
-            return self.sale_price - self.property_listing.price
-        return 0.00  
-
-    def __str__(self):
-        return f"Sale of {self.property_listing} to {self.buyer_name}"
 
 
 class Sale(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     property_listing = models.ForeignKey(PropertyListing, on_delete=models.CASCADE)
     agent = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # Fix field name
     buyer_name = models.CharField(max_length=100, default="Unknown Buyer")

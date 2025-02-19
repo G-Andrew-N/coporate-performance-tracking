@@ -3,9 +3,9 @@
 {% block content %}
     <div class="update-task-container">
         <h1>Update Task Status</h1>
-        <form method="POST" class="update-form">
+        <form method="POST" enctype="multipart/form-data" class="update-form">
             {% csrf_token %}
-            
+
             <label for="status"><strong>Status:</strong></label>
             <select name="status" id="status" class="status-dropdown">
                 {% for choice in task.STATUS_CHOICES %}
@@ -15,10 +15,36 @@
                 {% endfor %}
             </select>
 
+            <div id="document-upload-section" style="display: none;">
+                <label for="task_document"><strong>Upload Deliverable:</strong></label>
+                <input type="file" name="task_document" id="task_document" required>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn update-btn">Update</button>
                 <a href="{% url 'agent_workpage' %}" class="btn cancel-btn">Cancel</a>
             </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let statusDropdown = document.getElementById("status");
+            let documentUploadSection = document.getElementById("document-upload-section");
+            let taskDocumentInput = document.getElementById("task_document");
+
+            function toggleDocumentUpload() {
+                if (statusDropdown.value === "Done") {
+                    documentUploadSection.style.display = "block";
+                    taskDocumentInput.setAttribute("required", "required");
+                } else {
+                    documentUploadSection.style.display = "none";
+                    taskDocumentInput.removeAttribute("required");
+                }
+            }
+
+            statusDropdown.addEventListener("change", toggleDocumentUpload);
+            toggleDocumentUpload();  // Ensure correct initial state
+        });
+    </script>
 {% endblock %}

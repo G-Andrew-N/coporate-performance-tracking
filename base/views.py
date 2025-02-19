@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Q
-from .models import PropertyListing, Task, Salez, Employee, PerformanceMetrics, ProductivityTracker, Revenue, PredefinedTask
+from .models import PropertyListing, Task, Sale, Employee, PerformanceMetrics, ProductivityTracker, Revenue, PredefinedTask
 from .forms import PropertyListingForm
 from uuid import UUID
 from django.db import models  # Add this import
@@ -17,6 +17,8 @@ from django.contrib.auth.models import User, Group
 from datetime import datetime
 from django.urls import reverse
 from django.core.paginator import Paginator
+from decimal import Decimal, InvalidOperation
+
 
 
 from django.shortcuts import render
@@ -49,11 +51,7 @@ def generate_chart(x, y, title, xlabel, ylabel):
 
 
 def home(request):
-    # Generate charts
-    sales_by_month = SalesRecord.objects.values('sale_date__month').annotate(total_sales=Sum('sale_price')).order_by('sale_date__month')
-    months = [record['sale_date__month'] for record in sales_by_month]
-    sales = [record['total_sales'] for record in sales_by_month]
-    sales_chart = generate_chart(months, sales, "Monthly Sales Volume", "Month", "Sales Volume")
+
 
     productivity_data = ProductivityTracker.objects.values('date').annotate(total_hours=Sum('hours_worked')).order_by('date')
     dates = [record['date'] for record in productivity_data]
@@ -66,7 +64,7 @@ def home(request):
     revenue_chart = generate_chart(revenue_months, revenues, "Revenue Trends", "Time", "Revenue")
 
     context = {
-        'sales_chart': sales_chart,
+        
         'productivity_chart': productivity_chart,
         'revenue_chart': revenue_chart,
     }
@@ -105,33 +103,44 @@ def login_page(request):
     return render(request, 'base/login.html')
 
 
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Employee, PerformanceMetrics, Task, Revenue, Sale  # Fixed Sale model reference
+
 @login_required
 def user_profile_view(request):
     # Get the logged-in user's Employee record
     employee = get_object_or_404(Employee, user=request.user)
-    performance_metrics = PerformanceMetrics.objects.filter(employee=employee).first()
-    sales = SalesRecord.objects.filter(agent=employee).order_by('-sale_date')[:10]
 
-    # Data for charts
-    task_status_counts = {
-        'Pending': Task.objects.filter(assigned_to=employee, status='Pending').count(),
-        'Completed': Task.objects.filter(assigned_to=employee, status='Completed').count(),
-        'Overdue': Task.objects.filter(assigned_to=employee, status='Overdue').count(),
-    }
+    # Get performance metrics, defaulting to an empty one if not found
+    performance_metrics = PerformanceMetrics.objects.filter(employee=employee).first()
+
+    # Fetch recent sales handled by the employee
+    sales = Sale.objects.filter(agent=employee.user).order_by('-sale_date')[:10]  # Fixed agent reference
+
+    # Task status counts for chart display
+    task_status_counts = [
+        Task.objects.filter(assigned_to=employee, status=status).count()
+        for status in ['Pending', 'Completed', 'Overdue']
+    ]
+
+    # Revenue data for chart display
+    revenue_entries = Revenue.objects.all().order_by("year", "month")
     revenue_data = {
-        'labels': list(Revenue.objects.values_list('month', flat=True).distinct()),
-        'net_profits': list(Revenue.objects.values_list('net_profit', flat=True).distinct()),
+        'labels': [f"{entry.year}-{entry.month:02d}" for entry in revenue_entries],
+        'net_profits': [entry.net_profit for entry in revenue_entries],
     }
 
     context = {
-        'user': employee.user,
+        'user': request.user,
         'employee': employee,
-        'performance_metrics': performance_metrics,
+        'performance_metrics': performance_metrics or {},
         'sales': sales,
-        'task_status_counts': list(task_status_counts.values()),
+        'task_status_counts': task_status_counts,
         'revenue_data': revenue_data,
     }
     return render(request, 'base/user_profile.html', context)
+
 
 
 # Assign Task View
@@ -393,14 +402,32 @@ def task_performance(request):
 # Update Task Status View
 @login_required
 def update_task_status(request, task_id):
+    task = get_object_or_404(Task, id=task_id, assigned_to=request.user)
+    
     if request.method == 'POST':
-        task = get_object_or_404(Task, id=task_id, assigned_to=request.user)
         new_status = request.POST.get('status')
+        task_document = request.FILES.get('task_document')
+
+        if new_status == "Done" and not task_document:
+            return JsonResponse({'error': 'Document submission is required to mark the task as done'}, status=400)
+
         if new_status:
             task.status = new_status
-            task.save()
+            if new_status == "Done" and task_document:
+                task.document = task_document  # Assuming Task model has a `document` field
+                task.save()
+
+                # Increment tasks_completed in PerformanceMetrics
+                performance_metrics, created = PerformanceMetrics.objects.get_or_create(employee=request.user)
+                performance_metrics.tasks_completed += 1
+                performance_metrics.save()
+            else:
+                task.save()
+
         return redirect('task_performance')
+
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 
 # Make Sale View
 from django.shortcuts import render, get_object_or_404
@@ -408,89 +435,76 @@ from django.contrib.auth.decorators import login_required
 from datetime import datetime
  # Ensure correct imports
 
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from datetime import datetime
-from decimal import Decimal
-from .models import PropertyListing, Salez, Employee
+
 
 @login_required
 def make_sale(request, property_id):
-    property = get_object_or_404(PropertyListing, pk=property_id)
+    property_listing = get_object_or_404(PropertyListing, pk=property_id)
 
     if request.method == 'POST':
-        buyer_name = request.POST.get('buyer_name', 'Unknown Buyer')
-        buyer_id = request.POST.get('buyer_id', 'Unknown ID')
-        buyer_email = request.POST.get('buyer_email', 'notprovided@example.com')
-        buyer_tel = request.POST.get('buyer_tel', 'Not Provided')
-        buyer_address = request.POST.get('buyer_address', 'Not Provided')
-        payment_method = request.POST.get('payment_method', 'Cash')
-        seller_name = request.POST.get('seller_name', 'Unknown Seller')
-        seller_tel = request.POST.get('seller_tel', 'Not Provided')
-        seller_email = request.POST.get('seller_email', 'notprovided@example.com')
-        seller_address = request.POST.get('seller_address', 'Not Provided')
-        ownership_verification = request.POST.get('ownership_verification', 'Pending Verification')
+        # Extract form data safely with default values
+        form_data = {
+            'buyer_name': request.POST.get('buyer_name', 'Unknown Buyer'),
+            'buyer_id': request.POST.get('buyer_id', 'Unknown ID'),
+            'buyer_email': request.POST.get('buyer_email', 'notprovided@example.com'),
+            'buyer_tel': request.POST.get('buyer_tel', 'Not Provided'),
+            'buyer_address': request.POST.get('buyer_address', 'Not Provided'),
+            'payment_method': request.POST.get('payment_method', 'Cash'),
+            'seller_name': request.POST.get('seller_name', 'Unknown Seller'),
+            'seller_tel': request.POST.get('seller_tel', 'Not Provided'),
+            'seller_email': request.POST.get('seller_email', 'notprovided@example.com'),
+            'seller_address': request.POST.get('seller_address', 'Not Provided'),
+            'ownership_verification': request.POST.get('ownership_verification', 'Pending Verification'),
+        }
 
-        # Convert and handle empty dates safely
-        sale_date = request.POST.get('sale_date')
-        closing_date = request.POST.get('closing_date')
-        sale_date = datetime.strptime(sale_date, "%Y-%m-%d").date() if sale_date else None
-        closing_date = datetime.strptime(closing_date, "%Y-%m-%d").date() if closing_date else None
-
-        # Convert price fields safely
+        # Convert date fields safely
         try:
-            sale_price = Decimal(request.POST.get('sale_price', '0.00'))
-            title_insurance = Decimal(request.POST.get('title_insurance', '0.00'))
-            legal_fees = Decimal(request.POST.get('legal_fees', '0.00'))
-            deposit = Decimal(request.POST.get('deposit', '0.00'))
-        except Exception as e:
-            messages.error(request, f"Invalid number format: {e}")
-            return render(request, 'base/make_sale.html', {'property': property})
+            sale_date = request.POST.get('sale_date')
+            closing_date = request.POST.get('closing_date')
+            form_data['sale_date'] = datetime.strptime(sale_date, "%Y-%m-%d").date() if sale_date else None
+            form_data['closing_date'] = datetime.strptime(closing_date, "%Y-%m-%d").date() if closing_date else None
+        except ValueError:
+            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+            return render(request, 'base/make_sale.html', {'property': property_listing})
 
-        # Get the logged-in user's Employee profile
+        # Convert numeric fields safely
         try:
-            agent = Employee.objects.get(user=request.user)
-        except Employee.DoesNotExist:
-            messages.error(request, "You must be a registered employee to make a sale.")
-            return render(request, 'base/make_sale.html', {'property': property})
+            form_data.update({
+                'sale_price': Decimal(request.POST.get('sale_price', '0.00')),
+                'title_insurance': Decimal(request.POST.get('title_insurance', '0.00')),
+                'legal_fees': Decimal(request.POST.get('legal_fees', '0.00')),
+                'deposit': Decimal(request.POST.get('deposit', '0.00')),
+            })
+        except (ValueError, InvalidOperation):
+            messages.error(request, "Invalid number format. Ensure all amounts are valid numbers.")
+            return render(request, 'base/make_sale.html', {'property': property_listing})
 
-        # Create a new sale record
+        # Create and save sale with the logged-in user as the agent
         sale = Sale(
-            property_listing=property,
-            agent=request.user,
-            buyer_name=buyer_name,
-            buyer_id=buyer_id,
-            buyer_email=buyer_email,
-            buyer_tel=buyer_tel,
-            buyer_address=buyer_address,
-            payment_method=payment_method,
-            seller_name=seller_name,
-            seller_tel=seller_tel,
-            seller_email=seller_email,
-            seller_address=seller_address,
-            ownership_verification=ownership_verification,
-            sale_date=sale_date,
-            sale_price=sale_price,
-            title_insurance=title_insurance,
-            legal_fees=legal_fees,
-            deposit=deposit,
-            closing_date=closing_date
+            property_listing=property_listing,
+            agent=request.user,  # Assign the logged-in user
+            **form_data
         )
-        sale.save()
 
-        # Calculate profit
-        profit = sale.profit  # Sale model handles this via property method
+        try:
+            sale.full_clean()  # Validate fields before saving
+            sale.save()
+        except ValidationError as e:
+            messages.error(request, f"Error saving sale: {e}")
+            return render(request, 'base/make_sale.html', {'property': property_listing})
 
-        # Mark the property as sold
-        property.status = 'Sold'
-        property.save()
+        # Update property status
+        property_listing.status = 'Sold'
+        property_listing.save()
 
-        # Success message
+        # Calculate profit (from `Sale` model)
+        profit = sale.profit
+
+        # Show success message
         messages.success(request, f"Sale successful! Profit: {profit:.2f} USD.")
         return render(request, 'base/sale_confirmation.html', {'message': f"Sale successful! Profit: {profit:.2f} USD."})
 
-    return render(request, 'base/make_sale.html', {'property': property})
+    return render(request, 'base/make_sale.html', {'property': property_listing})
 
 
 
@@ -608,7 +622,7 @@ def admin_panel(request):
     }
 
     # Recent Activities
-    recent_sales = Sale.objects.select_related('property').order_by('-sale_date')[:5]
+    recent_sales = Sale.objects.select_related('property_listing').order_by('-sale_date')[:5]
     recent_tasks = Task.objects.select_related('assigned_to__user').order_by('-due_date')[:5]
 
     context = {
