@@ -1,60 +1,51 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Count, Q
-from .models import PropertyListing, Task, Sale, Employee, PerformanceMetrics, ProductivityTracker, Revenue, PredefinedTask
-from .forms import PropertyListingForm
-from uuid import UUID
-from django.db import models  # Add this import
-from django.db.models import Sum  # Add this import
-from django.contrib import messages
-from django.core.paginator import Paginator
-import csv
-from django.http import HttpResponse
 from django.contrib.auth.models import User, Group
-from datetime import datetime
+from django.db import models
+from django.db.models import F, Q, Sum, Avg, Count
+from django.utils.timezone import now
 from django.urls import reverse
 from django.core.paginator import Paginator
-from decimal import Decimal, InvalidOperation
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.db.models import F
-from django.utils.timezone import now
+from django.core.paginator import Paginator
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
-from .models import PropertyListing, Sale, Employee, AgentProfit
-from django.contrib.auth import logout
-from django.shortcuts import redirect
+from uuid import UUID
 
+#predictions
 from django.shortcuts import render
-from django.db.models import Avg, Sum, Count
-from .models import Employee, ProductivityTracker, Revenue, PerformanceMetrics
+from django.db.models import Avg
+from datetime import datetime, timedelta
+from .models import Revenue, PropertyListing
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
 
+# Models
+from .models import (
+    PropertyListing,
+    Task,
+    Sale,
+    Employee,
+    PerformanceMetrics,
+    ProductivityTracker,
+    Revenue,
+    PredefinedTask,
+    AgentProfit,
+)
+
+# Forms
+from .forms import PropertyListingForm
+
+# Matplotlib for chart generation
 import matplotlib.pyplot as plt
 import io
-import urllib, base64
-
-import matplotlib.pyplot as plt
+import urllib
+import base64
 from io import BytesIO
-import base64
 
-from django.shortcuts import render
-from django.db.models import Sum
-from .models import Sale, PropertyListing, PerformanceMetrics
-
-import matplotlib.pyplot as plt
-import io
-import base64
-from django.shortcuts import render
-from django.db.models import Sum  # ✅ Import Sum for aggregation
-from decimal import Decimal
-from django.contrib.auth import authenticate, login
-from django.shortcuts import redirect, render
-from django.contrib import messages
-from .models import Employee
 
 
 def landing(request):
@@ -111,9 +102,7 @@ def signup(request):
     return render(request, "base/signup.html")
 
 
-from django.shortcuts import render
-from django.db.models import Sum
-from .models import Sale, PropertyListing, PerformanceMetrics
+
 
 def home(request):
     # Financial Summary
@@ -234,6 +223,7 @@ def user_profile_view(request):
 @login_required
 def assign_task(request):
     # Fetch predefined tasks, agents, and assigned tasks
+    
     predefined_tasks = PredefinedTask.objects.all()
     agents = Employee.objects.filter(role='Agent')
     assigned_tasks = Task.objects.filter(assigned_to__isnull=False)
@@ -487,33 +477,25 @@ def task_performance(request):
     return render(request, 'base/task_performance.html', context)
 
 # Update Task Status View
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Task
+
 @login_required
 def update_task_status(request, task_id):
-    task = get_object_or_404(Task, id=task_id, assigned_to=request.user)
+    task = get_object_or_404(Task, id=task_id, assigned_to=request.user.employee)
     
     if request.method == 'POST':
         new_status = request.POST.get('status')
-        task_document = request.FILES.get('task_document')
-
-        if new_status == "Done" and not task_document:
-            return JsonResponse({'error': 'Document submission is required to mark the task as done'}, status=400)
-
-        if new_status:
+        if new_status in ['Pending', 'In Progress', 'Completed', 'Overdue']:
             task.status = new_status
-            if new_status == "Done" and task_document:
-                task.document = task_document  # Assuming Task model has a `document` field
-                task.save()
-
-                # Increment tasks_completed in PerformanceMetrics
-                performance_metrics, created = PerformanceMetrics.objects.get_or_create(employee=request.user)
-                performance_metrics.tasks_completed += 1
-                performance_metrics.save()
-            else:
-                task.save()
-
-        return redirect('task_performance')
-
-    return JsonResponse({'error': 'Invalid request method'}, status=400)
+            task.save()
+            return redirect('agent_workpage')  # Redirect back to agent's workspace
+    
+    context = {
+        'task': task,
+    }
+    return render(request, 'base/update_task_status.html', context)
 
 
 # Make Sale View
@@ -680,50 +662,9 @@ def agent_workpage(request):
     return render(request, 'base/agent_workpage.html', context)
 
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from .models import Task, PerformanceMetrics
-
-@login_required
-def update_task_status(request, task_id):
-    # Fetch the task
-    task = get_object_or_404(Task, id=task_id)
-
-    # Ensure request.user is the actual person assigned
-    if task.assigned_to and hasattr(task.assigned_to, 'user') and task.assigned_to.user != request.user:
-        return JsonResponse({'error': 'You are not assigned to this task'}, status=403)
-
-    if request.method == 'POST':
-        new_status = request.POST.get('status')
-        task_document = request.FILES.get('task_document')
-
-        if new_status == "Done" and not task_document:
-            return JsonResponse({'error': 'Document submission is required to mark the task as done'}, status=400)
-
-        # Update task status and document
-        if new_status:
-            task.status = new_status
-            if new_status == "Done" and task_document:
-                task.document = task_document
-                task.save()
-
-                # Ensure PerformanceMetrics updates properly
-                performance_metrics, created = PerformanceMetrics.objects.get_or_create(employee=task.assigned_to)
-                performance_metrics.tasks_completed += 1
-                performance_metrics.save()
-            else:
-                task.save()
-
-        return redirect('task_performance')
-
-    return render(request, 'base/update_task_status.html', {'task': task})
 
 
-@login_required
-def task_detail(request, task_id):
-    task = get_object_or_404(Task, id=task_id, assigned_to=request.user.employee)
-    return render(request, 'base/task_detail.html', {'task': task})
+
 
 
 @login_required
@@ -772,14 +713,7 @@ def admin_panel(request):
 
 
 
-#predictions
-from django.shortcuts import render
-from django.db.models import Avg
-from datetime import datetime, timedelta
-from .models import Revenue, PropertyListing
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import LinearRegression
+
 
 def predict_revenue(request):
     # Fetch revenue data

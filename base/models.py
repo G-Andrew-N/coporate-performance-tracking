@@ -4,6 +4,10 @@ import uuid
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+# views.py
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 
 
 class PropertyListing(models.Model):
@@ -97,6 +101,55 @@ class PredefinedTask(models.Model):
         return self.title
 
 
+
+
+@login_required
+def update_task_status(request, task_id):
+    task = get_object_or_404(Task, id=task_id, assigned_to=request.user)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        task_document = request.FILES.get('task_document')
+
+        if new_status == "Completed" and not task_document:
+            return JsonResponse({'error': 'Document submission is required to mark the task as completed'}, status=400)
+
+        if new_status:
+            task.status = new_status
+            if new_status == "Completed" and task_document:
+                task.document = task_document
+                task.save()
+                
+                # Update performance metrics
+                performance_metrics, _ = PerformanceMetrics.objects.get_or_create(employee=request.user)
+                performance_metrics.tasks_completed += 1
+                performance_metrics.save()
+            else:
+                task.save()
+
+        return redirect('task_dashboard')
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+@login_required
+def task_dashboard(request):
+    pending_tasks = Task.objects.filter(assigned_to=request.user, status='Pending')
+    overdue_tasks = Task.objects.filter(assigned_to=request.user, status='Overdue')
+    completed_tasks = Task.objects.filter(assigned_to=request.user, status='Completed')
+    return render(request, 'tasks/dashboard.html', {
+        'pending_tasks': pending_tasks,
+        'overdue_tasks': overdue_tasks,
+        'completed_tasks': completed_tasks
+    })
+
+@login_required
+def clear_completed_tasks(request):
+    if request.method == 'POST':
+        Task.objects.filter(assigned_to=request.user, status='Completed').delete()
+        return redirect('task_dashboard')
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
 class Task(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     predefined_task = models.ForeignKey('PredefinedTask', on_delete=models.CASCADE)
@@ -119,6 +172,7 @@ class Task(models.Model):
             self.priority = self.predefined_task.priority
             self.description = self.predefined_task.description
         super(Task, self).save(*args, **kwargs)
+
 
 
 # ✅ Signal to update task points

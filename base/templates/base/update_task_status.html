@@ -4,50 +4,76 @@
     <div class="update-task-container">
         <h1>Update Task Status</h1>
         
-        <!-- Ensure form posts to the correct URL -->
-        <form method="POST" enctype="multipart/form-data" class="update-form">
+        <form method="POST">
             {% csrf_token %}
+            <div class="form-group">
+                <label for="task-title">Task:</label>
+                <input type="text" id="task-title" value="{{ task.predefined_task }}" disabled>
+            </div>
             
-            <label for="status"><strong>Status:</strong></label>
-            <select name="status" id="status" class="status-dropdown">
-                {% for choice in task.STATUS_CHOICES %}
-                    <option value="{{ choice.0 }}" {% if choice.0 == task.status %}selected{% endif %}>
-                        {{ choice.1 }}
-                    </option>
-                {% endfor %}
-            </select>
-
-            <!-- Hidden upload section that appears when 'Done' is selected -->
-            <div id="document-upload-section" style="display: none;">
-                <label for="task_document"><strong>Upload Deliverable:</strong></label>
-                <input type="file" name="task_document" id="task_document">
+            <div class="form-group">
+                <label for="task-status">Status:</label>
+                <select id="task-status" name="status">
+                    <option value="Pending" {% if task.status == "Pending" %}selected{% endif %}>Pending</option>
+                    <option value="In Progress" {% if task.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                    <option value="Completed" {% if task.status == "Completed" %}selected{% endif %}>Completed</option>
+                    <option value="Overdue" {% if task.status == "Overdue" %}selected{% endif %}>Overdue</option>
+                </select>
             </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn update-btn">Update</button>
-                <a href="{% url 'agent_workpage' %}" class="btn cancel-btn">Cancel</a>
-            </div>
+            
+            <button type="submit" class="update-button">Update Status</button>
         </form>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let statusDropdown = document.getElementById("status");
-            let documentUploadSection = document.getElementById("document-upload-section");
-            let taskDocumentInput = document.getElementById("task_document");
+    <style>
+        .update-task-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
 
-            function toggleDocumentUpload() {
-                if (statusDropdown.value === "Done") {
-                    documentUploadSection.style.display = "block";
-                    taskDocumentInput.setAttribute("required", "required");
-                } else {
-                    documentUploadSection.style.display = "none";
-                    taskDocumentInput.removeAttribute("required");
-                }
-            }
+        h1 {
+            color: #2c5282;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
 
-            statusDropdown.addEventListener("change", toggleDocumentUpload);
-            toggleDocumentUpload(); // Ensure correct initial state
-        });
-    </script>
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+
+        .update-button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .update-button:hover {
+            background-color: #2b6cb0;
+        }
+    </style>
 {% endblock %}

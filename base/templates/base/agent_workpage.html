@@ -3,7 +3,7 @@
 {% block content %}
     <div class="workspace-container">
         <h1>Welcome, {{ request.user.get_full_name }} (Agent)</h1>
-        <a href="{% url 'user_profile' %}" class="profile-link">View Profile</a>
+        
 
         <!-- Section 1: Tasks Assigned -->
         <div class="tasks-section">
@@ -61,7 +61,7 @@
                         <td>{{ property.price }}</td>
                         <td>{{ property.status }}</td>
                         <td>
-                            <a href="{% url 'make_sale' property.id %}" class="action-link">Make Sale</a>
+                            <a href="{% url 'make_sale' property.id %}" class="action-link">Sell</a>
                         </td>
                     </tr>
                     {% empty %}

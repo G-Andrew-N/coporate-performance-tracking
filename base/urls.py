@@ -39,7 +39,7 @@ urlpatterns = [
     
     
     path('tasks/<uuid:task_id>/update/', views.update_task_status, name='update_task_status'),
-    path('tasks/<uuid:task_id>/', views.task_detail, name='task_detail'),
+    
     
     
     path('employees/', views.employee_list, name='employee_list'),
