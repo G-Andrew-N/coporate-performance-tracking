@@ -12,5 +12,6 @@ admin.site.register(PerformanceMetrics)
 admin.site.register(ProductivityTracker)
 admin.site.register(PredefinedTask)
 admin.site.register(Sale)
+admin.site.register(AgentProfit)
 
 

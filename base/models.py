@@ -1,14 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
-from uuid import uuid4
 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-
-
-    
-from django.db import models
-import uuid
 
 class PropertyListing(models.Model):
     STATUS_CHOICES = [
@@ -17,9 +13,7 @@ class PropertyListing(models.Model):
         ('Under Contract', 'Under Contract'),
     ]
 
-    # Explicit UUIDField as the primary key
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     propertyType = models.CharField(max_length=30)
     location = models.CharField(max_length=30)
     address = models.CharField(max_length=100)
@@ -28,16 +22,16 @@ class PropertyListing(models.Model):
     electricityStatus = models.CharField(max_length=30)
     bathroomCount = models.PositiveIntegerField()
     bedroomCount = models.PositiveIntegerField()
-    bookingAmount = models.DecimalField(max_digits=10, decimal_places=2)
-    price = models.DecimalField(max_digits=15, decimal_places=2)
+    bookingAmount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Available')
     image = models.ImageField(upload_to='property_images/', null=True, blank=True)
 
     def __str__(self):
         return f"{self.propertyType} - {self.location}"
-    
+
+
 class Employee(models.Model):
- 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50)  # e.g., Agent, Manager, Admin
     join_date = models.DateField()
@@ -45,9 +39,8 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.role})"
-    
-    
-    
+
+
 class Revenue(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     year = models.PositiveIntegerField()
@@ -58,15 +51,30 @@ class Revenue(models.Model):
 
     def __str__(self):
         return f"Revenue for {self.year}-{self.month:02d}: {self.net_profit}"
+
+
 class PerformanceMetrics(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True, blank=True)
     tasks_completed = models.PositiveIntegerField(default=0)
     sales_closed = models.PositiveIntegerField(default=0)
-    
+    aggregate_points = models.PositiveIntegerField(default=0)  # New field
 
     def __str__(self):
-        return f"Performance Metrics (Employee: {self.employee}, Property: {self.property})"
+        return f"Performance Metrics (Employee: {self.employee})"
+
+    def update_aggregate_points(self):
+        """Updates the aggregate points based on sales and tasks completed."""
+        self.aggregate_points = (self.sales_closed * 10) + (self.tasks_completed * 5)
+        self.save()
+
+
+# ✅ Signal to create PerformanceMetrics when a new Employee is added
+@receiver(post_save, sender=Employee)
+def create_performance_metrics(sender, instance, created, **kwargs):
+    if created:
+        PerformanceMetrics.objects.create(employee=instance)
+
 
 class ProductivityTracker(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -77,9 +85,8 @@ class ProductivityTracker(models.Model):
 
     def __str__(self):
         return f"Productivity for {self.employee} on {self.date}"
-    
 
-    
+
 class PredefinedTask(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100)
@@ -88,42 +95,45 @@ class PredefinedTask(models.Model):
 
     def __str__(self):
         return self.title
-    
+
+
 class Task(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-      
-    predefined_task = models.ForeignKey(PredefinedTask, on_delete=models.CASCADE)
-    assigned_to = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
-    
+    predefined_task = models.ForeignKey('PredefinedTask', on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey('Employee', on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField(blank=True)
     priority = models.CharField(max_length=20, choices=[('Low', 'Low'), ('Medium', 'Medium'), ('High', 'High')], blank=True)
     due_date = models.DateField()
     status = models.CharField(
-        max_length=20, 
-        choices=[('Pending', 'Pending'), ('Completed', 'Completed'), ('Overdue', 'Overdue')]
+        max_length=20,
+        choices=[('Pending', 'Pending'), ('Completed', 'Completed'), ('Overdue', 'Overdue')],
     )
-    
-    document = models.FileField(upload_to='task_documents/', null=True, blank=True)  # New field
+    document = models.FileField(upload_to='task_documents/', null=True, blank=True)
 
     def __str__(self):
         return f"{self.predefined_task.title} ({self.status})"
 
-
     def save(self, *args, **kwargs):
-        # Ensure that when a predefined_task is set, the priority and description are updated
+        """Ensure priority and description are updated from predefined task."""
         if self.predefined_task:
             self.priority = self.predefined_task.priority
             self.description = self.predefined_task.description
-        super(Task, self).save(*args, **kwargs)  # Save the object after filling the fields
+        super(Task, self).save(*args, **kwargs)
 
 
-
+# ✅ Signal to update task points
+@receiver(post_save, sender=Task)
+def update_task_points(sender, instance, **kwargs):
+    if instance.status == "Completed" and instance.assigned_to:
+        performance_metrics, _ = PerformanceMetrics.objects.get_or_create(employee=instance.assigned_to)
+        performance_metrics.tasks_completed += 1
+        performance_metrics.update_aggregate_points()
 
 
 class Sale(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    property_listing = models.ForeignKey(PropertyListing, on_delete=models.CASCADE)
-    agent = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # Fix field name
+    property_listing = models.ForeignKey('PropertyListing', on_delete=models.CASCADE)
+    agent = models.ForeignKey('Employee', on_delete=models.SET_NULL, null=True, blank=True)
     buyer_name = models.CharField(max_length=100, default="Unknown Buyer")
     buyer_id = models.CharField(max_length=100, default="Unknown ID")
     buyer_email = models.EmailField(null=True, blank=True, default="notprovided@example.com")
@@ -142,12 +152,28 @@ class Sale(models.Model):
     deposit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     closing_date = models.DateField(null=True, blank=True)
 
-    @property
-    def profit(self):
-        if self.property_listing and self.sale_price:
-            return self.sale_price - self.property_listing.price
-        return 0.00  
-
     def __str__(self):
         return f"Sale of {self.property_listing} to {self.buyer_name}"
 
+
+# ✅ Signal to update sales points
+@receiver(post_save, sender=Sale)
+def update_sales_points(sender, instance, created, **kwargs):
+    if created and instance.agent:
+        performance_metrics, _ = PerformanceMetrics.objects.get_or_create(employee=instance.agent)
+        performance_metrics.sales_closed += 1
+        performance_metrics.update_aggregate_points()
+
+
+
+
+
+class AgentProfit(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent = models.ForeignKey('Employee', on_delete=models.CASCADE)
+    sale = models.ForeignKey('Sale', on_delete=models.CASCADE)
+    profit_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Profit: {self.profit_amount} (Agent: {self.agent})"

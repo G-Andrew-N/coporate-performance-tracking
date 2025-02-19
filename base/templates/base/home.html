@@ -1,48 +1,109 @@
 {% extends 'main.html' %}
 
 {% block content %}
-    <div class="container">
-        <a href="{% url 'login' %}" class="btn-login">Login</a>
-
-        <div class="chart-section">
-            <div class="chart-container">
-                <h2>Sales Volume Trends</h2>
-                <img src="{{ sales_chart }}" alt="Sales Volume Trends">
-            </div>
-
-            <div class="chart-container">
-                <h2>Productivity Trends</h2>
-                <img src="{{ productivity_chart }}" alt="Productivity Trends">
-            </div>
-
-            <div class="chart-container">
-                <h2>Revenue Trends</h2>
-                <img src="{{ revenue_chart }}" alt="Revenue Trends">
+<div class="container mt-4">
+    <a href="{% url 'login' %}" class="btn-login">Login</a>
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <h6>Total Revenue (YTD)</h6>
+                    <h4>${{ total_revenue|default:"0.00" }}</h4>
+                </div>
             </div>
         </div>
-
-        <div class="table-section">
-            <h2>Agent Performance</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Agent</th>
-                            <th>Role</th>
-                            <th>Average Customer Satisfaction</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for agent in agent_performance %}
-                            <tr>
-                                <td>{{ agent.user.get_full_name }}</td>
-                                <td>{{ agent.role }}</td>
-                                <td>{{ agent.avg_score|default:"N/A" }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <h6>Net Profit (YTD)</h6>
+                    <h4>${{ net_profit|default:"0.00" }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <h6>Properties Sold</h6>
+                    <h4>{{ properties_sold }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <h6>Pending Ownership Verifications</h6>
+                    <h4>{{ pending_verifications }}</h4>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Charts Section -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h5>Sales Volume Trends</h5>
+                <img src="{{ sales_chart }}" alt="Sales Trends">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h5>Productivity Trends</h5>
+                <img src="{{ productivity_chart }}" alt="Productivity Trends">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h5>Revenue Trends</h5>
+                <img src="{{ revenue_chart }}" alt="Revenue Trends">
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Performance Table -->
+    <div class="table-section mt-4">
+        <h4>Top Performing Agents</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Agent</th>
+                    <th>Role</th>
+                    <th>Tasks Completed</th>
+                    <th>Sales Closed</th>
+                    <th>Performance Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agent in agent_performance %}
+                <tr>
+                    <td>{{ agent.user.get_full_name }}</td>
+                    <td>{{ agent.role }}</td>
+                    <td>{{ agent.tasks_completed }}</td>
+                    <td>{{ agent.sales_closed }}</td>
+                    <td>{{ agent.performance_score|default:"N/A" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Custom Styling -->
+<style>
+    .summary-card {
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 10px;
+        text-align: center;
+        border-radius: 8px;
+    }
+    .chart-container img {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
 {% endblock %}

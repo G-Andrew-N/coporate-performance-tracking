@@ -3,9 +3,11 @@
 {% block content %}
     <div class="update-task-container">
         <h1>Update Task Status</h1>
+        
+        <!-- Ensure form posts to the correct URL -->
         <form method="POST" enctype="multipart/form-data" class="update-form">
             {% csrf_token %}
-
+            
             <label for="status"><strong>Status:</strong></label>
             <select name="status" id="status" class="status-dropdown">
                 {% for choice in task.STATUS_CHOICES %}
@@ -15,9 +17,10 @@
                 {% endfor %}
             </select>
 
+            <!-- Hidden upload section that appears when 'Done' is selected -->
             <div id="document-upload-section" style="display: none;">
                 <label for="task_document"><strong>Upload Deliverable:</strong></label>
-                <input type="file" name="task_document" id="task_document" required>
+                <input type="file" name="task_document" id="task_document">
             </div>
 
             <div class="form-actions">
@@ -44,7 +47,7 @@
             }
 
             statusDropdown.addEventListener("change", toggleDocumentUpload);
-            toggleDocumentUpload();  // Ensure correct initial state
+            toggleDocumentUpload(); // Ensure correct initial state
         });
     </script>
 {% endblock %}

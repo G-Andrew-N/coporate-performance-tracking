@@ -1,6 +1,14 @@
 {% extends 'main.html' %}
 
 {% block content %}
+<style>
+    canvas {
+        max-width: 400px;  /* Adjust width */
+        max-height: 300px; /* Adjust height */
+        margin: auto;      /* Center the charts */
+        display: block;
+    }
+</style>
     <div class="container">
         <h1>{{ user.get_full_name }}</h1>
         <h2>Role: {{ employee.role }}</h2>
@@ -19,8 +27,8 @@
         </section>
 
         <section>
-            <h2>Revenue Summary</h2>
-            <canvas id="revenueChart"></canvas>
+            <h2>Profit Trends</h2>
+            <canvas id="profitTrendChart"></canvas>
         </section>
 
         <section>
@@ -40,10 +48,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // Task Status Pie Chart
+            // 🚀 Task Status Pie Chart
             let taskStatusCtx = document.getElementById("taskStatusChart").getContext("2d");
             let taskStatusData = {{ task_status_counts|default:"[]"|safe }};
-            
+
             if (taskStatusData.length > 0) {
                 new Chart(taskStatusCtx, {
                     type: "pie",
@@ -66,21 +74,21 @@
                 });
             }
 
-            // Revenue Line Chart
-            let revenueCtx = document.getElementById("revenueChart").getContext("2d");
-            let revenueLabels = {{ revenue_data.labels|default:"[]"|safe }};
-            let revenueValues = {{ revenue_data.net_profits|default:"[]"|safe }};
+            // 🚀 Agent Profit Trend Chart
+            let profitCtx = document.getElementById("profitTrendChart").getContext("2d");
+            let profitLabels = {{ profit_data.labels|default:"[]"|safe }};
+            let profitValues = {{ profit_data.profit_values|default:"[]"|safe }};
 
-            if (revenueLabels.length > 0 && revenueValues.length > 0) {
-                new Chart(revenueCtx, {
+            if (profitLabels.length > 0 && profitValues.length > 0) {
+                new Chart(profitCtx, {
                     type: "line",
                     data: {
-                        labels: revenueLabels,
+                        labels: profitLabels,
                         datasets: [{
-                            label: "Net Profit",
-                            data: revenueValues,
-                            borderColor: "rgba(75, 192, 192, 1)",
-                            backgroundColor: "rgba(75, 192, 192, 0.2)",
+                            label: "Profit Amount ($)",
+                            data: profitValues,
+                            borderColor: "rgba(255, 99, 132, 1)",
+                            backgroundColor: "rgba(255, 99, 132, 0.2)",
                             borderWidth: 2,
                             tension: 0.3,
                             fill: true

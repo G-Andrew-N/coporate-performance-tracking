@@ -18,7 +18,14 @@ from datetime import datetime
 from django.urls import reverse
 from django.core.paginator import Paginator
 from decimal import Decimal, InvalidOperation
-
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import F
+from django.utils.timezone import now
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
+from .models import PropertyListing, Sale, Employee, AgentProfit
 
 
 from django.shortcuts import render
@@ -33,45 +40,77 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 
-def generate_chart(x, y, title, xlabel, ylabel):
-    fig, ax = plt.subplots()
-    ax.plot(x, y)
-    ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
-    
-    # Save plot to a BytesIO object
-    buf = BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    
-    # Convert to base64 encoding for embedding in HTML
-    chart_data = base64.b64encode(buf.read()).decode('utf-8')
-    plt.close(fig)  # Close the plot to free up resources
-    
-    return chart_data
+from django.shortcuts import render
+from django.db.models import Sum
+from .models import Sale, PropertyListing, PerformanceMetrics
 
+import matplotlib.pyplot as plt
+import io
+import base64
+from django.shortcuts import render
+from django.db.models import Sum  # ✅ Import Sum for aggregation
+from decimal import Decimal
+
+
+def landing(request):
+    return render(request, "base/landing_page.html")
+
+def generate_chart(data, title):
+    """Helper function to create base64-encoded chart images."""
+    plt.figure(figsize=(5, 3))
+    plt.plot(data, marker='o', linestyle='-')
+    plt.title(title)
+    plt.grid(True)
+    
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format="png")
+    buffer.seek(0)
+    image_base64 = base64.b64encode(buffer.getvalue()).decode()
+    buffer.close()
+    
+    return f"data:image/png;base64,{image_base64}"
+
+
+from django.shortcuts import render
+from django.db.models import Sum
+from .models import Sale, PropertyListing, PerformanceMetrics
 
 def home(request):
+    # Financial Summary
+    total_revenue = Sale.objects.aggregate(total=Sum("sale_price"))["total"] or 0
+    net_profit = total_revenue * Decimal("0.85")  # Example: Assuming 15% expenses
 
+    # Property Metrics
+    properties_sold = PropertyListing.objects.filter(status="Sold").count()
+    
+    # Pending verifications removed since PropertyListing has no `ownership_verified` field
 
-    productivity_data = ProductivityTracker.objects.values('date').annotate(total_hours=Sum('hours_worked')).order_by('date')
-    dates = [record['date'] for record in productivity_data]
-    hours = [record['total_hours'] for record in productivity_data]
-    productivity_chart = generate_chart(dates, hours, "Productivity Over Time", "Date", "Hours Worked")
+    # Agent Performance
+    agent_performance = PerformanceMetrics.objects.order_by("-aggregate_points")[:5]
 
-    revenue_data = Revenue.objects.values('year', 'month').annotate(total_revenue=Sum('total_revenue')).order_by('year', 'month')
-    revenue_months = [f"{record['year']}-{record['month']:02d}" for record in revenue_data]
-    revenues = [record['total_revenue'] for record in revenue_data]
-    revenue_chart = generate_chart(revenue_months, revenues, "Revenue Trends", "Time", "Revenue")
+    # Sales Volume Trends (last 6 months)
+    sales_data = [Sale.objects.filter(sale_date__month=i).count() for i in range(7, 13)]
+    sales_chart = generate_chart(sales_data, "Sales Volume Trends")
+
+    # Productivity Trends
+    productivity_data = [agent.tasks_completed for agent in agent_performance]
+    productivity_chart = generate_chart(productivity_data, "Productivity Trends")
+
+    # Revenue Trends
+    revenue_data = [Sale.objects.filter(sale_date__month=i).aggregate(total=Sum("sale_price"))["total"] or 0 for i in range(7, 13)]
+    revenue_chart = generate_chart(revenue_data, "Revenue Trends")
 
     context = {
-        
-        'productivity_chart': productivity_chart,
-        'revenue_chart': revenue_chart,
+        "total_revenue": total_revenue,
+        "net_profit": net_profit,
+        "properties_sold": properties_sold,
+        "agent_performance": agent_performance,
+        "sales_chart": sales_chart,
+        "productivity_chart": productivity_chart,
+        "revenue_chart": revenue_chart,
     }
 
-    return render(request, 'base/home.html', context)
-
-
+    return render(request, "base/home.html", context)
 
 
 
@@ -109,14 +148,13 @@ from .models import Employee, PerformanceMetrics, Task, Revenue, Sale  # Fixed S
 
 @login_required
 def user_profile_view(request):
-    # Get the logged-in user's Employee record
     employee = get_object_or_404(Employee, user=request.user)
 
-    # Get performance metrics, defaulting to an empty one if not found
+    # Get performance metrics
     performance_metrics = PerformanceMetrics.objects.filter(employee=employee).first()
 
     # Fetch recent sales handled by the employee
-    sales = Sale.objects.filter(agent=employee.user).order_by('-sale_date')[:10]  # Fixed agent reference
+    sales = Sale.objects.filter(agent=employee).order_by('-sale_date')[:10]
 
     # Task status counts for chart display
     task_status_counts = [
@@ -124,11 +162,18 @@ def user_profile_view(request):
         for status in ['Pending', 'Completed', 'Overdue']
     ]
 
-    # Revenue data for chart display
+    # Revenue data (existing)
     revenue_entries = Revenue.objects.all().order_by("year", "month")
     revenue_data = {
         'labels': [f"{entry.year}-{entry.month:02d}" for entry in revenue_entries],
         'net_profits': [entry.net_profit for entry in revenue_entries],
+    }
+
+    # 🚀 Agent profit trends (new)
+    agent_profits = AgentProfit.objects.filter(agent=employee).order_by("recorded_at")
+    profit_data = {
+        'labels': [profit.recorded_at.strftime('%Y-%m-%d') for profit in agent_profits],
+        'profit_values': [float(profit.profit_amount) for profit in agent_profits],
     }
 
     context = {
@@ -138,9 +183,9 @@ def user_profile_view(request):
         'sales': sales,
         'task_status_counts': task_status_counts,
         'revenue_data': revenue_data,
+        'profit_data': profit_data,  # Add this
     }
     return render(request, 'base/user_profile.html', context)
-
 
 
 # Assign Task View
@@ -176,7 +221,7 @@ def assign_task(request):
             Task.objects.create(
                 predefined_task=predefined_task,
                 assigned_to=employee,
-                title=predefined_task.title,
+              
                 description=predefined_task.description,
                 priority=predefined_task.priority,
                 due_date=due_date,
@@ -437,75 +482,92 @@ from datetime import datetime
 
 
 
+from django.db.models import F
+from django.utils.timezone import now
+from .models import Sale, AgentProfit  # Import new model
+
 @login_required
 def make_sale(request, property_id):
     property_listing = get_object_or_404(PropertyListing, pk=property_id)
-
+    
+    # Get the Employee instance linked to the logged-in user
+    try:
+        agent = Employee.objects.get(user=request.user)
+    except Employee.DoesNotExist:
+        messages.error(request, "You are not registered as an employee.")
+        return redirect("some_error_page")
+    
     if request.method == 'POST':
-        # Extract form data safely with default values
-        form_data = {
-            'buyer_name': request.POST.get('buyer_name', 'Unknown Buyer'),
-            'buyer_id': request.POST.get('buyer_id', 'Unknown ID'),
-            'buyer_email': request.POST.get('buyer_email', 'notprovided@example.com'),
-            'buyer_tel': request.POST.get('buyer_tel', 'Not Provided'),
-            'buyer_address': request.POST.get('buyer_address', 'Not Provided'),
-            'payment_method': request.POST.get('payment_method', 'Cash'),
-            'seller_name': request.POST.get('seller_name', 'Unknown Seller'),
-            'seller_tel': request.POST.get('seller_tel', 'Not Provided'),
-            'seller_email': request.POST.get('seller_email', 'notprovided@example.com'),
-            'seller_address': request.POST.get('seller_address', 'Not Provided'),
-            'ownership_verification': request.POST.get('ownership_verification', 'Pending Verification'),
-        }
-
-        # Convert date fields safely
         try:
-            sale_date = request.POST.get('sale_date')
-            closing_date = request.POST.get('closing_date')
-            form_data['sale_date'] = datetime.strptime(sale_date, "%Y-%m-%d").date() if sale_date else None
-            form_data['closing_date'] = datetime.strptime(closing_date, "%Y-%m-%d").date() if closing_date else None
-        except ValueError:
-            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
-            return render(request, 'base/make_sale.html', {'property': property_listing})
+            # Extract form data with defaults
+            form_data = {
+                'buyer_name': request.POST.get('buyer_name', 'Unknown Buyer'),
+                'buyer_id': request.POST.get('buyer_id', 'Unknown ID'),
+                'buyer_email': request.POST.get('buyer_email', 'notprovided@example.com'),
+                'buyer_tel': request.POST.get('buyer_tel', 'Not Provided'),
+                'buyer_address': request.POST.get('buyer_address', 'Not Provided'),
+                'payment_method': request.POST.get('payment_method', 'Cash'),
+                'seller_name': request.POST.get('seller_name', 'Unknown Seller'),
+                'seller_tel': request.POST.get('seller_tel', 'Not Provided'),
+                'seller_email': request.POST.get('seller_email', 'notprovided@example.com'),
+                'seller_address': request.POST.get('seller_address', 'Not Provided'),
+                'ownership_verification': request.POST.get('ownership_verification', 'Pending Verification'),
+            }
+            
+            # Convert date fields
+            try:
+                sale_date = request.POST.get('sale_date')
+                closing_date = request.POST.get('closing_date')
+                form_data['sale_date'] = datetime.strptime(sale_date, "%Y-%m-%d").date() if sale_date else now().date()
+                form_data['closing_date'] = datetime.strptime(closing_date, "%Y-%m-%d").date() if closing_date else None
+            except ValueError:
+                messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+                return render(request, 'base/make_sale.html', {'property': property_listing})
 
-        # Convert numeric fields safely
-        try:
-            form_data.update({
-                'sale_price': Decimal(request.POST.get('sale_price', '0.00')),
-                'title_insurance': Decimal(request.POST.get('title_insurance', '0.00')),
-                'legal_fees': Decimal(request.POST.get('legal_fees', '0.00')),
-                'deposit': Decimal(request.POST.get('deposit', '0.00')),
-            })
-        except (ValueError, InvalidOperation):
-            messages.error(request, "Invalid number format. Ensure all amounts are valid numbers.")
-            return render(request, 'base/make_sale.html', {'property': property_listing})
+            # Convert numeric fields
+            try:
+                form_data.update({
+                    'sale_price': Decimal(request.POST.get('sale_price', '0.00')),
+                    'title_insurance': Decimal(request.POST.get('title_insurance', '0.00')),
+                    'legal_fees': Decimal(request.POST.get('legal_fees', '0.00')),
+                    'deposit': Decimal(request.POST.get('deposit', '0.00')),
+                })
+            except (ValueError, InvalidOperation):
+                messages.error(request, "Invalid number format. Ensure all amounts are valid numbers.")
+                return render(request, 'base/make_sale.html', {'property': property_listing})
 
-        # Create and save sale with the logged-in user as the agent
-        sale = Sale(
-            property_listing=property_listing,
-            agent=request.user,  # Assign the logged-in user
-            **form_data
-        )
+            # Create the Sale record
+            sale = Sale.objects.create(
+                property_listing=property_listing,
+                agent=agent,
+                **form_data
+            )
+            
+            # Calculate profit
+            profit_amount = form_data['sale_price'] - (form_data['legal_fees'] + form_data['title_insurance'])
 
-        try:
-            sale.full_clean()  # Validate fields before saving
-            sale.save()
-        except ValidationError as e:
-            messages.error(request, f"Error saving sale: {e}")
-            return render(request, 'base/make_sale.html', {'property': property_listing})
+            # Store the profit in the AgentProfit model
+            AgentProfit.objects.create(
+                agent=agent,
+                sale=sale,
+                profit_amount=profit_amount
+            )
+            
+            # Update the property's status
+            property_listing.status = "Sold"
+            property_listing.save()
 
-        # Update property status
-        property_listing.status = 'Sold'
-        property_listing.save()
-
-        # Calculate profit (from `Sale` model)
-        profit = sale.profit
-
-        # Show success message
-        messages.success(request, f"Sale successful! Profit: {profit:.2f} USD.")
-        return render(request, 'base/sale_confirmation.html', {'message': f"Sale successful! Profit: {profit:.2f} USD."})
-
+            messages.success(request, f"Sale successful! Profit: {profit_amount:.2f} USD.")
+            return render(request, 'base/sale_confirmation.html', {'message': f"Sale successful! Profit: {profit_amount:.2f} USD."})
+        
+        except PropertyListing.DoesNotExist:
+            messages.error(request, "Property not found.")
+        except Employee.DoesNotExist:
+            messages.error(request, "Agent not found.")
+        except Exception as e:
+            messages.error(request, f"Error: {str(e)}")
+            
     return render(request, 'base/make_sale.html', {'property': property_listing})
-
 
 
 @login_required
@@ -562,8 +624,8 @@ def agent_workpage(request):
     # Fetch productivity data for the agent
     productivity_data = ProductivityTracker.objects.filter(employee=employee)
 
-    # Fetch sales made by the agent
-    sales = Sale.objects.filter(agent=request.user)
+    # Fetch sales made by the agent (✅ FIXED THIS LINE)
+    sales = Sale.objects.filter(agent=employee)
 
     context = {
         'tasks': tasks,
@@ -576,18 +638,45 @@ def agent_workpage(request):
     return render(request, 'base/agent_workpage.html', context)
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import Task, PerformanceMetrics
+
 @login_required
 def update_task_status(request, task_id):
-    task = get_object_or_404(Task, id=task_id, assigned_to=request.user.employee)
-    
+    # Fetch the task
+    task = get_object_or_404(Task, id=task_id)
+
+    # Ensure request.user is the actual person assigned
+    if task.assigned_to and hasattr(task.assigned_to, 'user') and task.assigned_to.user != request.user:
+        return JsonResponse({'error': 'You are not assigned to this task'}, status=403)
+
     if request.method == 'POST':
         new_status = request.POST.get('status')
-        if new_status in [choice[0] for choice in Task.STATUS_CHOICES]:  # Validate status
+        task_document = request.FILES.get('task_document')
+
+        if new_status == "Done" and not task_document:
+            return JsonResponse({'error': 'Document submission is required to mark the task as done'}, status=400)
+
+        # Update task status and document
+        if new_status:
             task.status = new_status
-            task.save()
-            return redirect('agent_workpage')
-    
+            if new_status == "Done" and task_document:
+                task.document = task_document
+                task.save()
+
+                # Ensure PerformanceMetrics updates properly
+                performance_metrics, created = PerformanceMetrics.objects.get_or_create(employee=task.assigned_to)
+                performance_metrics.tasks_completed += 1
+                performance_metrics.save()
+            else:
+                task.save()
+
+        return redirect('task_performance')
+
     return render(request, 'base/update_task_status.html', {'task': task})
+
 
 @login_required
 def task_detail(request, task_id):
