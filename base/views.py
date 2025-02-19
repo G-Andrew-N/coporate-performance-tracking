@@ -26,7 +26,8 @@ from django.utils.timezone import now
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from .models import PropertyListing, Sale, Employee, AgentProfit
-
+from django.contrib.auth import logout
+from django.shortcuts import redirect
 
 from django.shortcuts import render
 from django.db.models import Avg, Sum, Count
@@ -121,11 +122,9 @@ def home(request):
 
     # Property Metrics
     properties_sold = PropertyListing.objects.filter(status="Sold").count()
-    
-    # Pending verifications removed since PropertyListing has no `ownership_verified` field
 
-    # Agent Performance
-    agent_performance = PerformanceMetrics.objects.order_by("-aggregate_points")[:5]
+    # Agent Performance (sorted by highest points)
+    agent_performance = PerformanceMetrics.objects.select_related("employee__user").order_by("-aggregate_points")[:5]
 
     # Sales Volume Trends (last 6 months)
     sales_data = [Sale.objects.filter(sale_date__month=i).count() for i in range(7, 13)]
@@ -152,8 +151,6 @@ def home(request):
     return render(request, "base/home.html", context)
 
 
-
-
 # Home View
 
 
@@ -178,6 +175,12 @@ def login_page(request):
             messages.error(request, "Username or password does not exist.")
     
     return render(request, 'base/login.html')
+
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')  
 
 
 
@@ -766,3 +769,117 @@ def admin_panel(request):
 
 
 
+
+
+
+#predictions
+from django.shortcuts import render
+from django.db.models import Avg
+from datetime import datetime, timedelta
+from .models import Revenue, PropertyListing
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+def predict_revenue(request):
+    # Fetch revenue data
+    revenue_data = Revenue.objects.all().order_by('year', 'month')
+    
+    if not revenue_data.exists():
+        return render(request, 'base/predictive_analysis.html', {'message': 'No revenue data available for prediction.'})
+
+    # Prepare data for prediction
+    dates = []  # X-axis (months since start)
+    revenues = []  # Y-axis (net profit)
+    
+    start_date = datetime(revenue_data.first().year, revenue_data.first().month, 1)
+    for record in revenue_data:
+        date = datetime(record.year, record.month, 1)
+        months_since_start = (date.year - start_date.year) * 12 + (date.month - start_date.month)
+        dates.append([months_since_start])
+        revenues.append(record.net_profit)
+    
+    # Convert to NumPy arrays
+    X = np.array(dates)
+    y = np.array(revenues)
+    
+    # Train linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
+    
+    # Predict revenue for next 3 months
+    predictions = {}
+    last_month = X[-1][0]  # Last recorded month index
+    for i in range(1, 4):
+        next_month_index = last_month + i
+        next_month = (start_date + timedelta(days=30 * next_month_index)).strftime('%Y-%m')
+        predicted_value = model.predict([[next_month_index]])[0]
+        predictions[next_month] = round(predicted_value, 2)
+    
+    return render(request, 'base/predictive_analysis.html', {'predictions': predictions})
+
+def predict_property_price(request):
+    # Fetch available locations for filter options
+    available_locations = PropertyListing.objects.values_list('location', flat=True).distinct()
+
+    # Get user input from the request
+    selected_location = request.GET.get('location', None)
+    selected_floors = request.GET.get('floors', None)
+    selected_area = request.GET.get('covered_area', None)
+
+    # Filter property data based on user input
+    property_data = PropertyListing.objects.filter(price__isnull=False)
+
+    if selected_location:
+        property_data = property_data.filter(location=selected_location)
+
+    if not property_data.exists():
+        return render(request, 'base/predictive_analysis.html', {
+            'message': 'No property data available for prediction.',
+            'locations': available_locations
+        })
+
+    features = []  # X-axis (features: floors, coveredArea)
+    prices = []  # Y-axis (price)
+
+    for property in property_data:
+        try:
+            covered_area = float(property.coveredArea.replace('sqft', '').strip())
+        except ValueError:
+            continue
+        features.append([property.floors, covered_area])
+        prices.append(property.price)
+
+    if len(features) < 2:  # Ensure enough data points for training
+        return render(request, 'base/predictive_analysis.html', {
+            'message': 'Not enough data for prediction.',
+            'locations': available_locations
+        })
+
+    # Convert to NumPy arrays
+    X = np.array(features)
+    y = np.array(prices)
+
+    # Train linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
+
+    # Handle user-defined inputs for prediction
+    try:
+        input_floors = int(selected_floors) if selected_floors else 2
+        input_area = float(selected_area) if selected_area else 1500
+        sample_features = [[input_floors, input_area]]
+        predicted_price = model.predict(sample_features)[0]
+    except ValueError:
+        return render(request, 'base/predictive_analysis.html', {
+            'message': 'Invalid input values.',
+            'locations': available_locations
+        })
+
+    return render(request, 'base/predictive_analysis.html', {
+        'predicted_price': round(predicted_price, 2),
+        'locations': available_locations,
+        'selected_location': selected_location,
+        'selected_floors': selected_floors,
+        'selected_area': selected_area
+    })

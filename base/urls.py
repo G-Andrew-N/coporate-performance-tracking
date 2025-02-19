@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.landing, name='landing'),
     path('home/', views.home, name='home'),
     path('login/', views.login_page, name='login'),
+    path('logout/', views.logout_view, name='logout_view'),  
     path("signup/", views.signup, name="signup"),
     
     path('admin-panel/', views.admin_panel, name='admin_panel'),
@@ -47,4 +48,9 @@ urlpatterns = [
     path('employees/delete/<int:employee_id>/', views.delete_employee, name='delete_employee'),
     
     path('profile/', views.user_profile_view, name='user_profile'),
+
+
+
+    path('predict/revenue/', views.predict_revenue, name='predict_revenue'),
+    path('predict/property-price/', views.predict_property_price, name='predict_property_price'),
 ]

@@ -8,28 +8,43 @@
         <div class="menu-wrapper">
             {% if user.is_authenticated %}
                 <div class="navbar-links">
-                    {% if user.is_staff %}
+                    {% if user.is_superuser %}
+                        <!-- Superuser/Admin Panel Links -->
+                        <a href="{% url 'home' %}" class="nav-link">Dashboard</a>
+                        <a href="{% url 'admin_panel' %}" class="nav-link">Home</a>
                         
                         <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
                         
+                        <a href="{% url 'predict_property_price' %}" class="nav-link">Pricing Predictions</a>
+
+                    {% elif user.is_staff %}
+                        <!-- Staff (Non-Superuser) Links -->
+                        <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
+                        <a href="{% url 'task_performance' %}" class="nav-link">Tasks</a>
+
                     {% else %}
+                        <!-- Agent Links -->
                         <a href="{% url 'agent_workpage' %}" class="nav-link">My Workspace</a>
                         <a href="{% url 'property_list' %}" class="nav-link">Properties</a>
+                        <a href="{% url 'task_performance' %}" class="nav-link">Tasks</a>
                     {% endif %}
                 </div>
-                
+
                 <div class="navbar-user">
                     <div class="user-menu">
                         <button class="user-button">{{ user.get_full_name }} ▼</button>
                         <div class="dropdown-menu">
                             <a href="{% url 'user_profile' %}" class="dropdown-item">Profile</a>
-                            
+                            <a href="{% url 'logout_view' %}" class="dropdown-item">Logout</a>
                         </div>
                     </div>
                 </div>
+
             {% else %}
+                <!-- Guest Users -->
                 <div class="navbar-links">
                     <a href="{% url 'login' %}" class="nav-link">Login</a>
+                    <a href="{% url 'signup' %}" class="nav-link">Sign Up</a>
                 </div>
             {% endif %}
         </div>
@@ -44,134 +59,133 @@
 
 <style>
     /* General Navbar Styling */
-    .navbar {
-        background-color: #2C3E50;
-        padding: 1rem 2rem;
-        position: sticky;
-        top: 0;
-        width: 100%;
-        z-index: 1000;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    
-    .navbar-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    
-    .navbar-brand a {
-        color: #ECF0F1;
-        font-size: 1.8rem;
-        font-weight: bold;
-        text-decoration: none;
-    }
-    
-    .navbar-links {
-        display: flex;
-        gap: 1.5rem;
-    }
-    
-    .nav-link {
-        color: #ECF0F1;
-        text-decoration: none;
-        font-size: 1rem;
-        font-weight: 500;
-        padding: 0.5rem 1rem;
-        transition: 0.3s;
-    }
-    
-    .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-        border-radius: 5px;
-    }
+.navbar {
+    background-color: #0a0909;
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
-    /* User Dropdown Menu */
-    .navbar-user {
-        position: relative;
-    }
-    
-    .user-button {
-        background: none;
-        border: none;
-        color: #ECF0F1;
-        cursor: pointer;
-        font-size: 1rem;
-        padding: 0.5rem 1rem;
-        display: flex;
-        align-items: center;
-    }
-    
-    .dropdown-menu {
-        display: none;
-        position: absolute;
-        right: 0;
-        top: 100%;
-        background: white;
-        border-radius: 5px;
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-        min-width: 150px;
-    }
-    
-    .user-menu:hover .dropdown-menu {
-        display: block;
-    }
-    
-    .dropdown-item {
-        display: block;
-        padding: 0.75rem 1rem;
-        color: #2C3E50;
-        text-decoration: none;
-        transition: background 0.3s;
-    }
-    
-    .dropdown-item:hover {
-        background: #ECF0F1;
-    }
-    
-    /* Mobile Menu */
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.navbar-brand a {
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: 0.3s ease-in-out;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+}
+
+/* User Dropdown Menu */
+.navbar-user {
+    position: relative;
+}
+
+.user-button {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.user-button:hover {
+    text-decoration: underline;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+}
+
+.user-menu:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.dropdown-item:hover {
+    background: #ddd;
+}
+
+/* Mobile Menu */
+.mobile-menu-button {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.bar {
+    display: block;
+    width: 25px;
+    height: 3px;
+    margin: 5px 0;
+    background-color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
     .mobile-menu-button {
-        display: none;
-        background: none;
-        border: none;
-        cursor: pointer;
-    }
-    
-    .bar {
         display: block;
-        width: 25px;
-        height: 3px;
-        margin: 5px 0;
-        background-color: #ECF0F1;
     }
     
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .mobile-menu-button {
-            display: block;
-        }
-        
-        .menu-wrapper {
-            display: none;
-            flex-direction: column;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #2C3E50;
-            padding: 1rem;
-        }
-        
-        .menu-wrapper.active {
-            display: flex;
-        }
+    .menu-wrapper {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #333;
+        padding: 1rem;
     }
-</style>
+    
+    .menu-wrapper.active {
+        display: flex;
+    }
+}
 
-<script>
-    function toggleMenu() {
-        document.querySelector('.menu-wrapper').classList.toggle('active');
-    }
-</script>
+</style>

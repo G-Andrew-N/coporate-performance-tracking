@@ -17,25 +17,25 @@
         </a>
     </div>
 
-    <!-- Section 1: Employee Performance Metrics -->
-    <div class="employee-performance">
-        <h2>Employee Performance</h2>
+    <!-- Section 1: Agent Performance Metrics -->
+    <div class="agent-performance">
+        <h2>Agent Performance</h2>
         <table>
             <thead>
                 <tr>
-                    <th>Employee</th>
+                    <th>Agent</th>
                     <th>Tasks Completed</th>
                     <th>Sales Closed</th>
-                    
+                    <th>Aggregate Points</th>
                 </tr>
             </thead>
             <tbody>
-                {% for employee in employee_performance %}
+                {% for agent in employee_performance %}
                 <tr>
-                    <td>{{ employee.employee.get_full_name }}</td>
-                    <td>{{ employee.tasks_completed }}</td>
-                    <td>{{ employee.sales_closed }}</td>
-                    
+                    <td>{{ agent.employee.user.get_full_name }}</td>
+                    <td>{{ agent.tasks_completed }}</td>
+                    <td>{{ agent.sales_closed }}</td>
+                    <td>{{ agent.aggregate_points }}</td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -85,7 +85,7 @@
                 <tbody>
                     {% for sale in recent_sales %}
                     <tr>
-                        <td>{{ sale.property }}</td>
+                        <td>{{ sale.property_listing }}</td>
                         <td>{{ sale.sale_price }}</td>
                         <td>{{ sale.sale_date }}</td>
                     </tr>
@@ -120,200 +120,198 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="3">No recent tasks.</td>
+                        <td colspan="4">No recent tasks.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-    <style>
-        /* Admin Dashboard Main Container */
+</div>
+<style>
+    /* Admin Dashboard Main Container */
 .admin-panel {
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-    background-color: #f8f9fa;
+padding: 2rem;
+max-width: 1400px;
+margin: 0 auto;
+background-color: #f8f9fa;
 }
 
 .admin-panel h1 {
-    color: #2c3e50;
-    margin-bottom: 2rem;
-    font-size: 2.5rem;
-    font-weight: 600;
-    text-align: center;
+color: #2c3e50;
+margin-bottom: 2rem;
+font-size: 2.5rem;
+font-weight: 600;
+text-align: center;
 }
 
 /* Navigation Links */
 .admin-links {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 1.5rem;
+margin-bottom: 3rem;
 }
 
 .admin-links a {
-    background-color: #ffffff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #2c3e50;
-    text-align: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+background-color: #ffffff;
+padding: 1.5rem;
+border-radius: 8px;
+text-decoration: none;
+color: #2c3e50;
+text-align: center;
+transition: all 0.3s ease;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 0.5rem;
 }
 
 .admin-links a:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    background-color: #f8f9fa;
+transform: translateY(-2px);
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+background-color: #f8f9fa;
 }
 
 .admin-links i {
-    font-size: 1.5rem;
-    color: #3498db;
+font-size: 1.5rem;
+color: #3498db;
 }
 
 /* Employee Performance Section */
 .employee-performance {
-    background-color: #ffffff;
-    padding: 2rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+background-color: #ffffff;
+padding: 2rem;
+border-radius: 8px;
+margin-bottom: 2rem;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .employee-performance h2 {
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
+color: #2c3e50;
+margin-bottom: 1.5rem;
+font-size: 1.5rem;
 }
 
 /* Side by Side Sections */
 .side-by-side {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    margin-bottom: 2rem;
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 2rem;
+margin-bottom: 2rem;
 }
 
 .property-status,
 .financial-overview {
-    background-color: #ffffff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+background-color: #ffffff;
+padding: 2rem;
+border-radius: 8px;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .property-status h2,
 .financial-overview h2 {
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
+color: #2c3e50;
+margin-bottom: 1.5rem;
+font-size: 1.5rem;
 }
 
 .property-status ul,
 .financial-overview ul {
-    list-style: none;
-    padding: 0;
+list-style: none;
+padding: 0;
 }
 
 .property-status li,
 .financial-overview li {
-    margin-bottom: 1rem;
-    color: #505965;
+margin-bottom: 1rem;
+color: #505965;
 }
 
 /* Tables Styling */
 table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
+width: 100%;
+border-collapse: collapse;
+margin-top: 1rem;
 }
 
 thead {
-    background-color: #f8f9fa;
+background-color: #f8f9fa;
 }
 
 th {
-    padding: 1rem;
-    text-align: left;
-    color: #2c3e50;
-    font-weight: 600;
-    border-bottom: 2px solid #e9ecef;
+padding: 1rem;
+text-align: left;
+color: #2c3e50;
+font-weight: 600;
+border-bottom: 2px solid #e9ecef;
 }
 
 td {
-    padding: 1rem;
-    border-bottom: 1px solid #e9ecef;
-    color: #505965;
+padding: 1rem;
+border-bottom: 1px solid #e9ecef;
+color: #505965;
 }
 
 /* Recent Activities Section */
 .recent-activities {
-    background-color: #ffffff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+background-color: #ffffff;
+padding: 2rem;
+border-radius: 8px;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .recent-activities h2 {
-    color: #2c3e50;
-    margin-bottom: 2rem;
-    font-size: 1.5rem;
+color: #2c3e50;
+margin-bottom: 2rem;
+font-size: 1.5rem;
 }
 
 .recent-sales,
 .recent-tasks {
-    margin-bottom: 2rem;
+margin-bottom: 2rem;
 }
 
 .recent-sales h3,
 .recent-tasks h3 {
-    color: #2c3e50;
-    margin-bottom: 1rem;
-    font-size: 1.25rem;
+color: #2c3e50;
+margin-bottom: 1rem;
+font-size: 1.25rem;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .admin-panel {
-        padding: 1rem;
-    }
+.admin-panel {
+    padding: 1rem;
+}
 
-    .admin-links {
-        grid-template-columns: 1fr;
-    }
+.admin-links {
+    grid-template-columns: 1fr;
+}
 
-    .side-by-side {
-        grid-template-columns: 1fr;
-    }
+.side-by-side {
+    grid-template-columns: 1fr;
+}
 
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
+table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+}
 }
 
 /* Status Colors */
 .status-pending {
-    color: #f39c12;
+color: #f39c12;
 }
 
 .status-completed {
-    color: #27ae60;
+color: #27ae60;
 }
 
 .status-in-progress {
-    color: #3498db;
+color: #3498db;
 }
-    </style>
-</div>
-
-
+</style>
 {% endblock %}
