@@ -50,6 +50,10 @@ import base64
 from django.shortcuts import render
 from django.db.models import Sum  # ✅ Import Sum for aggregation
 from decimal import Decimal
+from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect, render
+from django.contrib import messages
+from .models import Employee
 
 
 def landing(request):
@@ -69,6 +73,41 @@ def generate_chart(data, title):
     buffer.close()
     
     return f"data:image/png;base64,{image_base64}"
+
+
+def signup(request):
+    if request.method == "POST":
+        first_name = request.POST["first_name"]
+        last_name = request.POST["last_name"]
+        email = request.POST["email"]
+        username = request.POST["username"]
+        password1 = request.POST["password1"]
+        password2 = request.POST["password2"]
+
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            return redirect("signup")
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already taken.")
+            return redirect("signup")
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email is already registered.")
+            return redirect("signup")
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password1,
+            first_name=first_name,
+            last_name=last_name
+        )
+        user.save()
+        messages.success(request, "Account created successfully! Please log in.")
+        return redirect("login")
+
+    return render(request, "base/signup.html")
 
 
 from django.shortcuts import render
@@ -124,22 +163,22 @@ def login_page(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
+        
         if user is not None:
             login(request, user)
-            # Redirect based on user role
-            try:
-                employee = Employee.objects.get(user=user)
-                if employee.role == 'Admin':
-                    return redirect('admin_panel')
-                elif employee.role == 'Agent':
-                    return redirect('agent_workpage')
-                else:
-                    return redirect('homie')  # Default redirect for other roles
-            except Employee.DoesNotExist:
-                return redirect('homie')  # Default redirect if no employee profile exists
+
+            # Superuser check
+            if user.is_superuser:
+                return redirect('admin_panel')
+
+            # Redirect other users to agent workpage
+            return redirect('agent_workpage')
+        
         else:
             messages.error(request, "Username or password does not exist.")
+    
     return render(request, 'base/login.html')
+
 
 
 from django.shortcuts import render, get_object_or_404

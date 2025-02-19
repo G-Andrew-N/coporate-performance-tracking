@@ -33,7 +33,7 @@ class PropertyListing(models.Model):
 
 class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    role = models.CharField(max_length=50)  # e.g., Agent, Manager, Admin
+    role = models.CharField(max_length=50, default='Agent')  # e.g., Agent, Manager, Admin
     join_date = models.DateField()
     performance_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
 
