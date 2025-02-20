@@ -1,34 +1,28 @@
+import json
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
+import urllib
+import base64
+from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
+from uuid import UUID
+from io import BytesIO
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Group
-from django.db import models
-from django.db.models import F, Q, Sum, Avg, Count
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.dispatch import receiver
 from django.utils.timezone import now
 from django.urls import reverse
 from django.core.paginator import Paginator
-from django.core.paginator import Paginator
-from decimal import Decimal, InvalidOperation
-from datetime import datetime
-from uuid import UUID
-from django.shortcuts import render
-from django.db.models import Sum, Count
-from decimal import Decimal
-import json
-from datetime import datetime, timedelta
-from .models import Sale, ProductivityTracker, Revenue, PerformanceMetrics, PropertyListing
-
-
-#predictions
-from django.shortcuts import render
-from django.db.models import Avg
-from datetime import datetime, timedelta
-from .models import Revenue, PropertyListing
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import LinearRegression
+from django.db import models
+from django.db.models import F, Q, Sum, Avg, Count
 
 # Models
 from .models import (
@@ -46,26 +40,9 @@ from .models import (
 # Forms
 from .forms import PropertyListingForm
 
-# Matplotlib for chart generation
-import matplotlib.pyplot as plt
-import io
-import urllib
-import base64
-from io import BytesIO
+# Machine Learning
+from sklearn.linear_model import LinearRegression
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from .models import Revenue
-import json
-
-
-
-from django.utils.timezone import now
-from django.db.models import Sum
-from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.dispatch import receiver
-from datetime import timedelta
-from .models import ProductivityTracker, Employee, Task
 
 @receiver(user_logged_in)
 def track_login(sender, request, user, **kwargs):
@@ -103,7 +80,7 @@ def track_logout(sender, request, user, **kwargs):
             employee=employee, date=today,
             defaults={'hours_worked': 0, 'tasks_completed': 0}
         )
-        tracker.hours_worked += round(hours_worked, 2)
+        tracker.hours_worked += Decimal(str(round(hours_worked, 2)))
         tracker.save()
 
 
@@ -164,12 +141,6 @@ def signup(request):
 
 
 
-import json
-from django.http import JsonResponse
-
-from django.db.models import Sum, Count
-from datetime import datetime, timedelta
-from decimal import Decimal
 
 def home(request):
     # Financial Summary
@@ -257,9 +228,6 @@ def logout_view(request):
 
 
 
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Employee, PerformanceMetrics, Task, Revenue, Sale  # Fixed Sale model reference
 
 @login_required
 def user_profile_view(request):
@@ -561,14 +529,7 @@ def task_performance(request):
     return render(request, 'base/task_performance.html', context)
 
 # Update Task Status View
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Task
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils.timezone import now
-from .models import Task
 
 @login_required
 def update_task_status(request, task_id):

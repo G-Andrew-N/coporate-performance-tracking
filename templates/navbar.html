@@ -10,7 +10,7 @@
             <ul class="navbar-links">
                 {% if user.is_authenticated %}
                     {% if user.is_superuser %}
-                        <li><a href="{% url 'admin_panel' %}" class="nav-link">Home</a></li>
+                        <li><a href="{% url 'admin_panel' %}" class="nav-link">Admin Workspace</a></li>
                         <li><a href="{% url 'property_list' %}" class="nav-link">Properties</a></li>
                         <li><a href="{% url 'predict_property_price' %}" class="nav-link">Pricing Predictions</a></li>
                         <li><a href="{% url 'home' %}" class="nav-link">Dashboard</a></li>
