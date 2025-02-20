@@ -13,6 +13,13 @@ from django.core.paginator import Paginator
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from uuid import UUID
+from django.shortcuts import render
+from django.db.models import Sum, Count
+from decimal import Decimal
+import json
+from datetime import datetime, timedelta
+from .models import Sale, ProductivityTracker, Revenue, PerformanceMetrics, PropertyListing
+
 
 #predictions
 from django.shortcuts import render
@@ -45,6 +52,59 @@ import io
 import urllib
 import base64
 from io import BytesIO
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import Revenue
+import json
+
+
+
+from django.utils.timezone import now
+from django.db.models import Sum
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.dispatch import receiver
+from datetime import timedelta
+from .models import ProductivityTracker, Employee, Task
+
+@receiver(user_logged_in)
+def track_login(sender, request, user, **kwargs):
+    if not hasattr(user, 'employee'):
+        return  # Skip if user is not an employee
+
+    employee = user.employee
+    today = now().date()
+
+    # Ensure a daily record exists
+    tracker, created = ProductivityTracker.objects.get_or_create(
+        employee=employee, date=today,
+        defaults={'hours_worked': 0, 'tasks_completed': 0}
+    )
+
+    # Store login time (in session)
+    request.session['login_time'] = now().isoformat()
+
+
+@receiver(user_logged_out)
+def track_logout(sender, request, user, **kwargs):
+    if not hasattr(user, 'employee'):
+        return  # Skip if user is not an employee
+
+    employee = user.employee
+    today = now().date()
+    
+    login_time = request.session.pop('login_time', None)
+    if login_time:
+        login_time = now() - now().fromisoformat(login_time)
+        hours_worked = login_time.total_seconds() / 3600  # Convert to hours
+        
+        # Update ProductivityTracker
+        tracker, _ = ProductivityTracker.objects.get_or_create(
+            employee=employee, date=today,
+            defaults={'hours_worked': 0, 'tasks_completed': 0}
+        )
+        tracker.hours_worked += round(hours_worked, 2)
+        tracker.save()
 
 
 
@@ -104,10 +164,21 @@ def signup(request):
 
 
 
+import json
+from django.http import JsonResponse
+
+from django.db.models import Sum, Count
+from datetime import datetime, timedelta
+from decimal import Decimal
+
 def home(request):
     # Financial Summary
-    total_revenue = Sale.objects.aggregate(total=Sum("sale_price"))["total"] or 0
-    net_profit = total_revenue * Decimal("0.85")  # Example: Assuming 15% expenses
+    total_revenue = Sale.objects.aggregate(total=Sum("sale_price"))["total"] or Decimal("0")
+    net_profit = total_revenue * Decimal("0.85")  # Assuming 15% expenses
+
+    # Convert Decimal to float for JSON serialization
+    total_revenue = float(total_revenue)
+    net_profit = float(net_profit)
 
     # Property Metrics
     properties_sold = PropertyListing.objects.filter(status="Sold").count()
@@ -115,30 +186,43 @@ def home(request):
     # Agent Performance (sorted by highest points)
     agent_performance = PerformanceMetrics.objects.select_related("employee__user").order_by("-aggregate_points")[:5]
 
-    # Sales Volume Trends (last 6 months)
-    sales_data = [Sale.objects.filter(sale_date__month=i).count() for i in range(7, 13)]
-    sales_chart = generate_chart(sales_data, "Sales Volume Trends")
+    # Sales Volume Trends (last 30 days)
+    sales_data = [Sale.objects.filter(sale_date__day=i).count() for i in range(1, 31)]
 
     # Productivity Trends
     productivity_data = [agent.tasks_completed for agent in agent_performance]
-    productivity_chart = generate_chart(productivity_data, "Productivity Trends")
 
-    # Revenue Trends
-    revenue_data = [Sale.objects.filter(sale_date__month=i).aggregate(total=Sum("sale_price"))["total"] or 0 for i in range(7, 13)]
-    revenue_chart = generate_chart(revenue_data, "Revenue Trends")
+    # Revenue Trends (Convert to float for JSON serialization)
+    revenue_data = [
+        float(Sale.objects.filter(sale_date__month=i).aggregate(total=Sum("sale_price"))["total"] or 0)
+        for i in range(7, 13)
+    ]
+
+    # Generate labels for charts
+    last_30_days = [f"Day {i}" for i in range(1, 31)]
+    month_labels = ["July", "August", "September", "October", "November", "December"]
 
     context = {
         "total_revenue": total_revenue,
         "net_profit": net_profit,
         "properties_sold": properties_sold,
-        "agent_performance": agent_performance,
-        "sales_chart": sales_chart,
-        "productivity_chart": productivity_chart,
-        "revenue_chart": revenue_chart,
+        "agent_performance": [
+            {
+                "name": metric.employee.user.get_full_name(),
+                "tasks_completed": metric.tasks_completed,
+                "sales_closed": metric.sales_closed,
+                "aggregate_points": metric.aggregate_points,
+            }
+            for metric in agent_performance
+        ],
+        "sales_data": json.dumps(sales_data),  
+        "productivity_data": json.dumps(productivity_data),  
+        "revenue_data": json.dumps(revenue_data),  
+        "last_30_days": json.dumps(last_30_days),  
+        "month_labels": json.dumps(month_labels),  
     }
 
     return render(request, "base/home.html", context)
-
 
 # Home View
 
@@ -481,21 +565,33 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Task
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils.timezone import now
+from .models import Task
+
 @login_required
 def update_task_status(request, task_id):
     task = get_object_or_404(Task, id=task_id, assigned_to=request.user.employee)
     
-    if request.method == 'POST':
-        new_status = request.POST.get('status')
-        if new_status in ['Pending', 'In Progress', 'Completed', 'Overdue']:
-            task.status = new_status
-            task.save()
-            return redirect('agent_workpage')  # Redirect back to agent's workspace
+    if request.method == 'POST' and 'document' in request.FILES:
+        task.document = request.FILES['document']
+        task.status = 'Completed'
+        task.save(update_fields=['document', 'status'])
+        return redirect('update_task_status', task_id=task.id)  # Reload page to reflect changes
     
-    context = {
-        'task': task,
-    }
+    # Determine task status automatically if no document was submitted
+    if not task.document:
+        if task.due_date < now().date():
+            task.status = 'Overdue'
+        else:
+            task.status = 'Pending'
+        task.save(update_fields=['status'])
+    
+    context = {'task': task}
     return render(request, 'base/update_task_status.html', context)
+
+
 
 
 # Make Sale View
@@ -817,3 +913,23 @@ def predict_property_price(request):
         'selected_floors': selected_floors,
         'selected_area': selected_area
     })
+
+
+
+
+
+
+@login_required
+def revenue_dashboard(request):
+    # Fetch revenue data and sort it by year and month
+    revenue_data = Revenue.objects.order_by("year", "month")
+
+    # Convert data into a structured format for visualization
+    revenue_chart_data = {
+        "labels": [f"{r.year}-{r.month:02d}" for r in revenue_data],
+        "total_revenue": [float(r.total_revenue) for r in revenue_data],
+        "total_expenses": [float(r.total_expenses) for r in revenue_data],
+        "net_profit": [float(r.net_profit) for r in revenue_data],
+    }
+
+    return render(request, "base/revenue_dashboard.html", {"revenue_chart_data": json.dumps(revenue_chart_data)})

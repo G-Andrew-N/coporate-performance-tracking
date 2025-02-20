@@ -1,0 +1,55 @@
+{% extends 'main.html' %}
+{% block content %}
+<div class="container">
+    <h2>Revenue Overview</h2>
+    
+    <!-- Revenue Chart -->
+    <canvas id="revenueChart"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const revenueData = JSON.parse('{{ revenue_chart_data|escapejs }}');
+
+            const ctx = document.getElementById("revenueChart").getContext("2d");
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: revenueData.labels,
+                    datasets: [
+                        {
+                            label: "Total Revenue",
+                            data: revenueData.total_revenue,
+                            borderColor: "blue",
+                            fill: false,
+                        },
+                        {
+                            label: "Total Expenses",
+                            data: revenueData.total_expenses,
+                            borderColor: "red",
+                            fill: false,
+                        },
+                        {
+                            label: "Net Profit",
+                            data: revenueData.net_profit,
+                            borderColor: "green",
+                            fill: false,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "top" },
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+        });
+    </script>
+</div>
+{% endblock %}

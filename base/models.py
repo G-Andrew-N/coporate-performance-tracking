@@ -8,6 +8,9 @@ from django.dispatch import receiver
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.utils.timezone import now
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class PropertyListing(models.Model):
@@ -182,6 +185,32 @@ def update_task_points(sender, instance, **kwargs):
         performance_metrics, _ = PerformanceMetrics.objects.get_or_create(employee=instance.assigned_to)
         performance_metrics.tasks_completed += 1
         performance_metrics.update_aggregate_points()
+from django.utils.timezone import now
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+# ✅ Signal to update task points
+@receiver(post_save, sender=Task)
+def update_task_points(sender, instance, **kwargs):
+    if instance.status == "Completed" and instance.assigned_to:
+        performance_metrics, _ = PerformanceMetrics.objects.get_or_create(employee=instance.assigned_to)
+        performance_metrics.tasks_completed += 1
+        performance_metrics.update_aggregate_points()
+
+# ✅ Signal to update productivity tracker
+@receiver(post_save, sender=Task)
+def update_task_productivity(sender, instance, **kwargs):
+    if instance.status == "Completed" and instance.assigned_to:
+        today = now().date()
+        employee = instance.assigned_to
+
+        # Update the productivity tracker
+        tracker, _ = ProductivityTracker.objects.get_or_create(
+            employee=employee, date=today,
+            defaults={'hours_worked': 0, 'tasks_completed': 0}
+        )
+        tracker.tasks_completed += 1
+        tracker.save()
 
 
 class Sale(models.Model):

@@ -3,6 +3,7 @@
 {% block content %}
 <div class="container mt-4">
     <a href="{% url 'login' %}" class="btn-login">Login</a>
+
     <!-- Summary Cards -->
     <div class="row">
         <div class="col-md-3">
@@ -44,161 +45,237 @@
         <div class="col-md-4">
             <div class="chart-container">
                 <h5>Sales Volume Trends</h5>
-                <img src="{{ sales_chart }}" alt="Sales Trends">
+                <canvas id="salesChart"></canvas>
             </div>
         </div>
         <div class="col-md-4">
             <div class="chart-container">
                 <h5>Productivity Trends</h5>
-                <img src="{{ productivity_chart }}" alt="Productivity Trends">
+                <canvas id="productivityChart"></canvas>
             </div>
         </div>
         <div class="col-md-4">
             <div class="chart-container">
                 <h5>Revenue Trends</h5>
-                <img src="{{ revenue_chart }}" alt="Revenue Trends">
+                <canvas id="revenueChart"></canvas>
             </div>
         </div>
     </div>
 
-<!-- Top Performing Agents Table -->
-<div class="table-section mt-4">
-    <h4>Top Performing Agents</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Agent</th>
-                <th>Tasks Completed</th>
-                <th>Sales Closed</th>
-                <th>Overall Points</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for metric in agent_performance %}
-            <tr>
-                <td>{{ metric.employee.user.get_full_name }}</td>
-                <td>{{ metric.tasks_completed }}</td>
-                <td>{{ metric.sales_closed }}</td>
-                <td>{{ metric.aggregate_points }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4">No performance data available</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Top Performing Agents Table -->
+    <div class="table-section mt-4">
+        <h4>Top Performing Agents</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Agent</th>
+                    <th>Tasks Completed</th>
+                    <th>Sales Closed</th>
+                    <th>Overall Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for metric in agent_performance %}
+                <tr>
+                    <td>{{ metric.name }}</td>
+                    <td>{{ metric.tasks_completed }}</td>
+                    <td>{{ metric.sales_closed }}</td>
+                    <td>{{ metric.aggregate_points }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No performance data available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
-</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Data from Django context
+        const salesData = JSON.parse('{{ sales_data|safe }}');
+        const productivityData = JSON.parse('{{ productivity_data|safe }}');
+        const revenueData = JSON.parse('{{ revenue_data|safe }}');
+        const last30Days = JSON.parse('{{ last_30_days|safe }}'); 
+        const monthLabels = JSON.parse('{{ month_labels|safe }}');
 
-<!-- Custom Styling -->
+        // Helper function to create a chart
+        function createChart(canvasId, type, labels, data, labelName, bgColor, borderColor) {
+            const ctx = document.getElementById(canvasId).getContext("2d");
+            new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelName,
+                        data: data,
+                        backgroundColor: bgColor,
+                        borderColor: borderColor,
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Sales Volume Chart
+        createChart(
+            "salesChart", 
+            "line", 
+            last30Days, 
+            salesData, 
+            "Daily Sales Volume", 
+            "rgba(54, 162, 235, 0.5)", 
+            "rgba(54, 162, 235, 1)"
+        );
+
+        // Productivity Chart
+        createChart(
+            "productivityChart", 
+            "bar", 
+            last30Days, 
+            productivityData, 
+            "Tasks Completed", 
+            "rgba(255, 99, 132, 0.5)", 
+            "rgba(255, 99, 132, 1)"
+        );
+
+        // Revenue Chart
+        createChart(
+            "revenueChart", 
+            "bar", 
+            monthLabels, 
+            revenueData, 
+            "Monthly Revenue", 
+            "rgba(75, 192, 192, 0.5)", 
+            "rgba(75, 192, 192, 1)"
+        );
+    });
+</script>
+
+
+
+
 <style>
-    /* Global Styles */
+
+    /* General Page Styling */
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
     margin: 0;
     padding: 0;
-    background-color: #f5f5f5;
-    color: #333;
 }
 
-/* Hero Section */
-.hero {
-    position: relative;
-    height: 100vh;
-    background: url('background.jpg') center/cover no-repeat;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    color: white;
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
 }
 
-.hero .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-}
-
-.hero-content {
-    position: relative;
-    z-index: 2;
-    max-width: 600px;
-}
-
-.hero h2 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-}
-
-.hero p {
-    font-size: 1.2rem;
-    margin-bottom: 20px;
-}
-
-.btn {
+/* Login Button */
+.btn-login {
     display: inline-block;
-    padding: 12px 24px;
-    border-radius: 8px;
+    background: #007bff;
+    color: white;
     text-decoration: none;
-    font-size: 1rem;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: bold;
     transition: 0.3s;
 }
 
-.btn-primary {
-    background: #007bff;
-    color: white;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
-}
-
-.btn-primary:hover {
+.btn-login:hover {
     background: #0056b3;
 }
 
-/* Features Section */
-.features {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 50px;
+/* Summary Cards */
+.summary-card {
     background: white;
-}
-
-.feature-card {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    width: 300px;
-}
-
-.feature-card h3 {
-    color: #007bff;
-}
-
-/* Chart Styles */
-.chart-container img {
-    width: 80%; /* Reduce size */
-    height: auto;
-    max-width: 300px; /* Ensure they are not too large */
+    padding: 15px;
     border-radius: 8px;
-    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-    display: block;
-    margin: 0 auto;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-bottom: 15px;
 }
 
-/* Footer */
-footer {
-    text-align: center;
-    padding: 20px;
-    background: #333;
+.summary-card h6 {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.summary-card h4 {
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Chart Containers */
+.chart-container {
+    width: 100%;
+    max-width: 350px;
+    height: 250px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin: 10px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 200px !important;
+}
+
+/* Table Styling */
+.table-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.table th, .table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table th {
+    background: #007bff;
     color: white;
 }
+
+.table tr:hover {
+    background: #f1f1f1;
+}
+
 
 </style>
 
