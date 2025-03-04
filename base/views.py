@@ -106,25 +106,25 @@ def generate_chart(data, title):
 
 
 def signup(request):
-    if request.method == "POST":
-        first_name = request.POST["first_name"]
-        last_name = request.POST["last_name"]
-        email = request.POST["email"]
-        username = request.POST["username"]
-        password1 = request.POST["password1"]
-        password2 = request.POST["password2"]
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        username = request.POST.get('username')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
 
         if password1 != password2:
-            messages.error(request, "Passwords do not match.")
-            return redirect("signup")
+            messages.error(request, 'Passwords do not match')
+            return redirect('signup')
 
         if User.objects.filter(username=username).exists():
-            messages.error(request, "Username already taken.")
-            return redirect("signup")
+            messages.error(request, 'Username already exists')
+            return redirect('signup')
 
         if User.objects.filter(email=email).exists():
-            messages.error(request, "Email is already registered.")
-            return redirect("signup")
+            messages.error(request, 'Email already exists')
+            return redirect('signup')
 
         user = User.objects.create_user(
             username=username,
@@ -133,11 +133,20 @@ def signup(request):
             first_name=first_name,
             last_name=last_name
         )
-        user.save()
-        messages.success(request, "Account created successfully! Please log in.")
-        return redirect("login")
 
-    return render(request, "base/signup.html")
+        # Create Employee record with Agent role
+        Employee.objects.create(
+            user=user,
+            role='Agent',
+            join_date=now().date()
+        )
+
+        # Log the user in
+        login(request, user)
+        messages.success(request, 'Account created successfully!')
+        return redirect('agent_workpage')
+
+    return render(request, 'base/signup.html')
 
 
 
@@ -146,21 +155,24 @@ def signup(request):
 def home(request):
     # Financial Summary
     total_revenue = Sale.objects.aggregate(total=Sum("sale_price"))["total"] or Decimal("0")
-    net_profit = total_revenue * Decimal("0.85")  # Assuming 15% expenses
+    
+    # Calculate net profit from Revenue model
+    latest_revenue = Revenue.objects.order_by('-year', '-month').first()
+    net_profit = latest_revenue.net_profit if latest_revenue else Decimal("0")
 
     # Convert Decimal to float for JSON serialization
     total_revenue = float(total_revenue)
     net_profit = float(net_profit)
 
     # Property Metrics
-    properties_sold = Sale.objects.count()  # Changed to count from Sale model
+    properties_sold = Sale.objects.count()
     
     # Property Status Distribution
     property_status_data = {
         'labels': ['Available', 'Sold', 'Under Contract'],
         'data': [
             PropertyListing.objects.filter(status='Available').count(),
-            Sale.objects.count(),  # Changed to count from Sale model
+            Sale.objects.count(),
             PropertyListing.objects.filter(status='Under Contract').count()
         ]
     }
@@ -484,9 +496,12 @@ def property_list(request):
 
     return render(request, 'base/property.html', {'view_mode': 'list', 'page_obj': page_obj})
 
-def property_detail(request, pk):
-    property_item = get_object_or_404(PropertyListing, pk=pk)
-    return render(request, 'base/property.html', {'view_mode': 'detail', 'property': property_item})
+def property_detail(request, property_id):
+    property = get_object_or_404(PropertyListing, id=property_id)
+    context = {
+        'property': property,
+    }
+    return render(request, 'base/property_detail.html', context)
 
 def property_add(request):
     if request.method == 'POST':
@@ -737,9 +752,6 @@ def role_based_redirect(request):
 
 
 @login_required
-
-
-
 def agent_workpage(request):
     try:
         # Get the logged-in agent
@@ -747,22 +759,24 @@ def agent_workpage(request):
     except Employee.DoesNotExist:
         return render(request, 'base/error.html', {'message': 'Employee profile not found.'})
 
-    # Fetch tasks assigned to the agent and categorize them
-    all_tasks = Task.objects.filter(assigned_to=employee)
+    # Fetch recent sales made by the agent
+    recent_sales = Sale.objects.filter(agent=employee).order_by('-sale_date')[:5]
     
-    # Categorize tasks based on status and due date
+    # Calculate sales performance metrics
+    total_sales = Sale.objects.filter(agent=employee).count()
+    total_revenue = Sale.objects.filter(agent=employee).aggregate(total=Sum('sale_price'))['total'] or 0
+    average_sale_price = Sale.objects.filter(agent=employee).aggregate(avg=Avg('sale_price'))['avg'] or 0
+    
+    # Get performance metrics
+    performance_metrics = PerformanceMetrics.objects.filter(employee=employee).first()
+    
+    # Get productivity data for the last 7 days
     today = now().date()
-    pending_tasks = []
-    overdue_tasks = []
-    completed_tasks = []
-
-    for task in all_tasks:
-        if task.status == 'Completed':
-            completed_tasks.append(task)
-        elif task.due_date < today:
-            overdue_tasks.append(task)
-        else:
-            pending_tasks.append(task)
+    last_week = today - timedelta(days=7)
+    productivity_data = ProductivityTracker.objects.filter(
+        employee=employee,
+        date__gte=last_week
+    ).order_by('date')
 
     # Fetch available properties and apply pagination
     property_list = PropertyListing.objects.filter(status='Available')
@@ -770,23 +784,14 @@ def agent_workpage(request):
     page_number = request.GET.get('page')
     properties = paginator.get_page(page_number)
 
-    # Fetch performance metrics for the agent
-    performance_metrics = PerformanceMetrics.objects.filter(employee=employee).first()
-
-    # Fetch productivity data for the agent
-    productivity_data = ProductivityTracker.objects.filter(employee=employee)
-
-    # Fetch sales made by the agent
-    sales = Sale.objects.filter(agent=employee)
-
     context = {
-        'pending_tasks': pending_tasks,
-        'overdue_tasks': overdue_tasks,
-        'completed_tasks': completed_tasks,
-        'properties': properties,
+        'recent_sales': recent_sales,
+        'total_sales': total_sales,
+        'total_revenue': total_revenue,
+        'average_sale_price': average_sale_price,
         'performance_metrics': performance_metrics,
         'productivity_data': productivity_data,
-        'sales': sales,
+        'properties': properties,
     }
 
     return render(request, 'base/agent_workpage.html', context)

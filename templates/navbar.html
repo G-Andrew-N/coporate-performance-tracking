@@ -2,7 +2,7 @@
     <div class="navbar-container">
         <!-- Left: Brand Logo -->
         <div class="navbar-brand">
-            <a href="{% url 'home' %}">🏠 RETS</a>
+            <a href="#">🏠 RETS</a>
         </div>
 
         <!-- Center: Menu Links -->
@@ -12,21 +12,18 @@
                     {% if user.is_superuser %}
                         <li><a href="{% url 'admin_panel' %}" class="nav-link"><span class="emoji">👑</span> Admin Workspace</a></li>
                         <li><a href="{% url 'property_list' %}" class="nav-link"><span class="emoji">🏢</span> Properties</a></li>
-                        <li><a href="{% url 'predict_property_price' %}" class="nav-link"><span class="emoji">📊</span> Pricing Predictions</a></li>
-                        <li><a href="{% url 'home' %}" class="nav-link"><span class="emoji">📈</span> Dashboard</a></li>
-                    {% elif user.is_staff %}
-                        <li><a href="{% url 'agent_workpage' %}" class="nav-link"><span class="emoji">💼</span> My Workspace</a></li>
-                        <li><a href="{% url 'predict_property_price' %}" class="nav-link"><span class="emoji">📊</span> Pricing Predictions</a></li>
-                        <li><a href="{% url 'home' %}" class="nav-link"><span class="emoji">📈</span> Dashboard</a></li>
+                        <li><a href="{% url 'predict_property_price' %}" class="nav-link"><span class="emoji">💰</span> Pricing Predictions</a></li>
+                        <li><a href="{% url 'home' %}" class="nav-link"><span class="emoji">📊</span> Dashboard</a></li>
                     {% else %}
-                        <li><a href="{% url 'agent_workpage' %}" class="nav-link"><span class="emoji">💼</span> My Workspace</a></li>
-                        <li><a href="{% url 'property_list' %}" class="nav-link"><span class="emoji">🏢</span> Properties</a></li>
-                        <li><a href="{% url 'task_performance' %}" class="nav-link"><span class="emoji">✅</span> Tasks</a></li>
+                        <li><a href="{% url 'agent_workpage' %}" class="nav-link"><span class="emoji">💸</span> Sell</a></li>
+                        <li><a href="{% url 'task_performance' %}" class="nav-link"><span class="emoji">📋</span> Tasks</a></li>
+                        <li><a href="{% url 'predict_property_price' %}" class="nav-link"><span class="emoji">💰</span> Pricing Predictions</a></li>
+                        <li><a href="{% url 'home' %}" class="nav-link"><span class="emoji">📊</span> Dashboard</a></li>
                     {% endif %}
                 {% else %}
                     <!-- Guest Users -->
                     <li><a href="{% url 'login' %}" class="nav-link"><span class="emoji">🔑</span> Login</a></li>
-                    <li><a href="{% url 'signup' %}" class="nav-link"><span class="emoji">📝</span> Sign Up</a></li>
+                    <li><a href="{% url 'signup' %}" class="nav-link"><span class="emoji">✍️</span> Sign Up</a></li>
                 {% endif %}
             </ul>
         </div>

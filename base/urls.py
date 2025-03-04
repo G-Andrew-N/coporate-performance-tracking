@@ -25,7 +25,7 @@ urlpatterns = [
 
     # Property Management
     path('property_list/', views.property_list, name='property_list'),
-    path('property/<uuid:pk>/', views.property_detail, name='property_detail'),
+    path('property/<uuid:property_id>/', views.property_detail, name='property_detail'),
     path('property/add/', views.property_add, name='property_add'),
     path('property/<uuid:pk>/edit/', views.property_edit, name='property_edit'),
     path('property/<uuid:pk>/delete/', views.property_delete, name='property_delete'),
