@@ -206,7 +206,30 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="form-grid">
-                    {{ form.as_p }}
+                    {% for field in form %}
+                        <div class="form-group {% if field.name == 'image' %}image-upload{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.name == 'image' %}
+                                <div class="image-upload-container">
+                                    {% if field.value %}
+                                        <div class="current-image">
+                                            <img src="{{ field.value.url }}" alt="Current property image">
+                                        </div>
+                                    {% endif %}
+                                    <div class="file-input-wrapper">
+                                        {{ field }}
+                                    </div>
+                                </div>
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="field-error">
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn submit-btn">
@@ -600,6 +623,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 /* Delete Confirmation */
@@ -713,6 +737,96 @@
     .pagination {
         flex-wrap: wrap;
     }
+}
+
+/* Image Upload Styles */
+.image-upload {
+    grid-column: 1 / -1;
+    margin-bottom: 1.5rem;
+}
+
+.image-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #e2e8f0;
+}
+
+.current-image {
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.current-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.file-input-wrapper {
+    text-align: center;
+}
+
+.file-input-wrapper input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+}
+
+.file-input-wrapper input[type="file"]:hover {
+    border-color: #4299e1;
+}
+
+.field-error {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Form Grid Improvements */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.form-group input:not([type="file"]),
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
 }
 </style>
 {% endblock %}
