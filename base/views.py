@@ -24,6 +24,12 @@ from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import F, Q, Sum, Avg, Count
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
 
 # Models
 from .models import (
@@ -1055,3 +1061,62 @@ def sale_summary(request):
     except Exception as e:
         messages.error(request, f"Error: {str(e)}")
         return redirect('property_list')
+
+def password_reset_request(request):
+    if request.method == 'POST':
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            try:
+                user = User.objects.get(email=email)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                reset_url = request.build_absolute_uri(f'/reset/{uid}/{token}/')
+                
+                # Send email
+                subject = 'Password Reset Requested'
+                message = f'Hello {user.username},\n\n'
+                message += f'You recently requested to reset your password. Click the link below to reset it:\n\n'
+                message += f'{reset_url}\n\n'
+                message += 'If you did not request a password reset, please ignore this email.\n\n'
+                message += 'Best regards,\nYour Team'
+                
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+                return redirect('password_reset_done')
+            except User.DoesNotExist:
+                # Don't reveal that the email doesn't exist
+                return redirect('password_reset_done')
+    else:
+        form = PasswordResetForm()
+    return render(request, 'base/password_reset.html', {'form': form})
+
+def password_reset_done(request):
+    return render(request, 'base/password_reset_done.html')
+
+def password_reset_confirm(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('password_reset_complete')
+        else:
+            form = SetPasswordForm(user)
+        return render(request, 'base/password_reset_confirm.html', {'form': form})
+    else:
+        return render(request, 'base/password_reset_confirm.html', {'validlink': False})
+
+def password_reset_complete(request):
+    return render(request, 'base/password_reset_complete.html')

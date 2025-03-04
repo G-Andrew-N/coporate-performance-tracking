@@ -57,4 +57,9 @@ urlpatterns = [
     path("revenue-dashboard/", views.revenue_dashboard, name="revenue_dashboard"),
 
     path('sale-summary/', views.sale_summary, name='sale_summary'),
+
+    path('password-reset/', views.password_reset_request, name='password_reset'),
+    path('password-reset/done/', views.password_reset_done, name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
+    path('reset/done/', views.password_reset_complete, name='password_reset_complete'),
 ]
