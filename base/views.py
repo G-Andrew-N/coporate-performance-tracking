@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import io
 import urllib
 import base64
+import csv  # Add csv import
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from uuid import UUID
@@ -152,14 +153,14 @@ def home(request):
     net_profit = float(net_profit)
 
     # Property Metrics
-    properties_sold = PropertyListing.objects.filter(status="Sold").count()
+    properties_sold = Sale.objects.count()  # Changed to count from Sale model
     
     # Property Status Distribution
     property_status_data = {
         'labels': ['Available', 'Sold', 'Under Contract'],
         'data': [
             PropertyListing.objects.filter(status='Available').count(),
-            PropertyListing.objects.filter(status='Sold').count(),
+            Sale.objects.count(),  # Changed to count from Sale model
             PropertyListing.objects.filter(status='Under Contract').count()
         ]
     }
@@ -532,11 +533,23 @@ def export_properties(request):
     response['Content-Disposition'] = 'attachment; filename="properties.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Address', 'Type', 'Location', 'Price', 'Status'])
+    # Include only the basic fields that exist in the PropertyListing model
+    writer.writerow([
+        'Address', 'Type', 'Location', 'Price', 'Status', 
+        'Floors', 'Covered Area'
+    ])
 
     properties = PropertyListing.objects.all()
     for property in properties:
-        writer.writerow([property.address, property.propertyType, property.location, property.price, property.status])
+        writer.writerow([
+            property.address,
+            property.propertyType,
+            property.location,
+            property.price,
+            property.status,
+            property.floors,
+            property.coveredArea
+        ])
 
     return response
 # Task Performance View
@@ -679,14 +692,8 @@ def make_sale(request, property_id):
             property_listing.status = "Sold"
             property_listing.save()
 
-            # Get past sales for the agent
-            past_sales = Sale.objects.filter(agent=agent).exclude(id=sale.id).order_by('-sale_date')[:5]
-
             messages.success(request, f"Sale successful! Profit: {profit_amount:.2f} USD.")
-            return render(request, 'base/sale_summary.html', {
-                'latest_sale': sale,
-                'past_sales': past_sales,
-            })
+            return redirect('sale_success')  # Changed from rendering sale_summary.html
         
         except PropertyListing.DoesNotExist:
             messages.error(request, "Property not found.")
@@ -703,12 +710,12 @@ def make_sale(request, property_id):
 
 @login_required
 def sale_success(request):
-    # Fetch all sales made by the logged-in agent
-    sales = Sale.objects.filter(agent=request.user).order_by('-sale_date')
+    # Get the latest sale for the logged-in user
+    latest_sale = Sale.objects.filter(agent__user=request.user).order_by('-sale_date').first()
 
     context = {
         'message': 'Sale completed successfully!',
-        'sales': sales
+        'latest_sale': latest_sale
     }
 
     return render(request, 'base/sale_confirmation.html', context)
@@ -799,7 +806,7 @@ def admin_panel(request):
     # Property Status
     total_properties = PropertyListing.objects.count()
     available_properties = PropertyListing.objects.filter(status='Available').count()
-    sold_properties = PropertyListing.objects.filter(status='Sold').count()
+    sold_properties = Sale.objects.count()  # Changed to count from Sale model
     property_status = {
         'total_properties': total_properties,
         'available_properties': available_properties,
