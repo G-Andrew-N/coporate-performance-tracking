@@ -1,94 +1,147 @@
 {% extends 'main.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <a href="{% url 'login' %}" class="btn-login">Login</a>
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <h1>Welcome to Real Estate Dashboard</h1>
+        <p class="subtitle">Overview of your business performance</p>
+    </div>
 
     <!-- Summary Cards -->
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card summary-card">
-                <div class="card-body">
-                    <h6>Total Revenue (YTD)</h6>
-                    <h4>${{ total_revenue|default:"0.00" }}</h4>
-                </div>
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="card-icon revenue">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="card-content">
+                <h3>Total Revenue</h3>
+                <p class="amount">₹{{ total_revenue|default:"0.00" }}</p>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card summary-card">
-                <div class="card-body">
-                    <h6>Net Profit (YTD)</h6>
-                    <h4>${{ net_profit|default:"0.00" }}</h4>
-                </div>
+        <div class="summary-card">
+            <div class="card-icon profit">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="card-content">
+                <h3>Net Profit</h3>
+                <p class="amount">₹{{ net_profit|default:"0.00" }}</p>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card summary-card">
-                <div class="card-body">
-                    <h6>Properties Sold</h6>
-                    <h4>{{ properties_sold }}</h4>
-                </div>
+        <div class="summary-card">
+            <div class="card-icon properties">
+                <i class="fas fa-home"></i>
+            </div>
+            <div class="card-content">
+                <h3>Properties Sold</h3>
+                <p class="amount">{{ properties_sold }}</p>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card summary-card">
-                <div class="card-body">
-                    <h6>Pending Ownership Verifications</h6>
-                    <h4>{{ pending_verifications }}</h4>
-                </div>
+        <div class="summary-card">
+            <div class="card-icon verification">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="card-content">
+                <h3>Pending Verifications</h3>
+                <p class="amount">{{ pending_verifications }}</p>
             </div>
         </div>
     </div>
 
-    <!-- Charts Section -->
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div class="chart-container">
-                <h5>Sales Volume Trends</h5>
-                <canvas id="salesChart"></canvas>
+    <!-- Main Charts Section -->
+    <div class="charts-grid">
+        <!-- Revenue Trends -->
+        <div class="chart-card large">
+            <div class="chart-header">
+                <h3>Revenue Trends</h3>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="chart-container">
-                <h5>Productivity Trends</h5>
-                <canvas id="productivityChart"></canvas>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="chart-container">
-                <h5>Revenue Trends</h5>
+            <div class="chart-body">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
+
+        <!-- Property Status Distribution -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Property Status</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="propertyStatusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Sales Volume -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Sales Volume</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Agent Performance -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Agent Performance</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="agentPerformanceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Monthly Sales -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Monthly Sales</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="monthlySalesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Productivity -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Productivity</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="productivityChart"></canvas>
+            </div>
+        </div>
     </div>
 
-    <!-- Top Performing Agents Table -->
-    <div class="table-section mt-4">
-        <h4>Top Performing Agents</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Agent</th>
-                    <th>Tasks Completed</th>
-                    <th>Sales Closed</th>
-                    <th>Overall Points</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for metric in agent_performance %}
-                <tr>
-                    <td>{{ metric.name }}</td>
-                    <td>{{ metric.tasks_completed }}</td>
-                    <td>{{ metric.sales_closed }}</td>
-                    <td>{{ metric.aggregate_points }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4">No performance data available</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Top Agents Table -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3>Top Performing Agents</h3>
+        </div>
+        <div class="table-body">
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Tasks Completed</th>
+                        <th>Sales Closed</th>
+                        <th>Overall Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for metric in agent_performance %}
+                    <tr>
+                        <td>{{ metric.name }}</td>
+                        <td>{{ metric.tasks_completed }}</td>
+                        <td>{{ metric.sales_closed }}</td>
+                        <td>{{ metric.aggregate_points }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="no-data">No performance data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -98,9 +151,12 @@
         // Data from Django context
         const salesData = JSON.parse('{{ sales_data|safe }}');
         const productivityData = JSON.parse('{{ productivity_data|safe }}');
-        const revenueData = JSON.parse('{{ revenue_data|safe }}');
+        const revenueTrends = JSON.parse('{{ revenue_trends|safe }}');
         const last30Days = JSON.parse('{{ last_30_days|safe }}'); 
         const monthLabels = JSON.parse('{{ month_labels|safe }}');
+        const propertyStatusData = JSON.parse('{{ property_status_data|safe }}');
+        const agentPerformanceData = JSON.parse('{{ agent_performance_data|safe }}');
+        const monthlySales = JSON.parse('{{ monthly_sales|safe }}');
 
         // Helper function to create a chart
         function createChart(canvasId, type, labels, data, labelName, bgColor, borderColor) {
@@ -152,131 +208,310 @@
             "rgba(255, 99, 132, 1)"
         );
 
-        // Revenue Chart
+        // Revenue Trends Chart
+        const revenueCtx = document.getElementById("revenueChart").getContext("2d");
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: revenueTrends.labels,
+                datasets: [
+                    {
+                        label: 'Total Revenue',
+                        data: revenueTrends.total_revenue,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Total Expenses',
+                        data: revenueTrends.total_expenses,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Net Profit',
+                        data: revenueTrends.net_profit,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderWidth: 2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ₹' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Property Status Distribution Chart
+        const propertyStatusCtx = document.getElementById("propertyStatusChart").getContext("2d");
+        new Chart(propertyStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: propertyStatusData.labels,
+                datasets: [{
+                    data: propertyStatusData.data,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Agent Performance Chart
+        const agentPerformanceCtx = document.getElementById("agentPerformanceChart").getContext("2d");
+        new Chart(agentPerformanceCtx, {
+            type: 'bar',
+            data: {
+                labels: agentPerformanceData.labels,
+                datasets: [
+                    {
+                        label: 'Tasks Completed',
+                        data: agentPerformanceData.tasks_completed,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Sales Closed',
+                        data: agentPerformanceData.sales_closed,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Monthly Sales Trend Chart
         createChart(
-            "revenueChart", 
-            "bar", 
-            monthLabels, 
-            revenueData, 
-            "Monthly Revenue", 
-            "rgba(75, 192, 192, 0.5)", 
-            "rgba(75, 192, 192, 1)"
+            "monthlySalesChart",
+            "line",
+            monthLabels,
+            monthlySales,
+            "Monthly Sales",
+            "rgba(153, 102, 255, 0.5)",
+            "rgba(153, 102, 255, 1)"
         );
     });
 </script>
 
-
-
-
 <style>
+    .dashboard-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        background-color: #f8f9fa;
+    }
 
-    /* General Page Styling */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-}
+    .welcome-section {
+        margin-bottom: 2rem;
+    }
 
-.container {
-    width: 90%;
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    background: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-}
+    .welcome-section h1 {
+        font-size: 2rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
 
-/* Login Button */
-.btn-login {
-    display: inline-block;
-    background: #007bff;
-    color: white;
-    text-decoration: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-weight: bold;
-    transition: 0.3s;
-}
+    .subtitle {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
 
-.btn-login:hover {
-    background: #0056b3;
-}
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
 
-/* Summary Cards */
-.summary-card {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    margin-bottom: 15px;
-}
+    .summary-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
 
-.summary-card h6 {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 5px;
-}
+    .summary-card:hover {
+        transform: translateY(-5px);
+    }
 
-.summary-card h4 {
-    font-size: 22px;
-    font-weight: bold;
-    color: #333;
-}
+    .card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
 
-/* Chart Containers */
-.chart-container {
-    width: 100%;
-    max-width: 350px;
-    height: 250px;
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    margin: 10px auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+    .card-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
 
-.chart-container canvas {
-    width: 100% !important;
-    height: 200px !important;
-}
+    .card-icon.revenue { background: #4CAF50; }
+    .card-icon.profit { background: #2196F3; }
+    .card-icon.properties { background: #FF9800; }
+    .card-icon.verification { background: #9C27B0; }
 
-/* Table Styling */
-.table-section {
-    margin-top: 20px;
-    padding: 15px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
+    .card-content h3 {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
+    .card-content .amount {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
 
-.table th, .table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
 
-.table th {
-    background: #007bff;
-    color: white;
-}
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
 
-.table tr:hover {
-    background: #f1f1f1;
-}
+    .chart-card.large {
+        grid-column: 1 / -1;
+    }
 
+    .chart-header {
+        margin-bottom: 1rem;
+    }
 
+    .chart-header h3 {
+        font-size: 1.1rem;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .chart-body {
+        height: 300px;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .table-header {
+        margin-bottom: 1rem;
+    }
+
+    .table-header h3 {
+        font-size: 1.1rem;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .performance-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .performance-table th,
+    .performance-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .performance-table th {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .performance-table tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .no-data {
+        text-align: center;
+        color: #6c757d;
+        padding: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-cards {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 {% endblock %}

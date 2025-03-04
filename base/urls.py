@@ -55,4 +55,6 @@ urlpatterns = [
     path('predict/property-price/', views.predict_property_price, name='predict_property_price'),
 
     path("revenue-dashboard/", views.revenue_dashboard, name="revenue_dashboard"),
+
+    path('sale-summary/', views.sale_summary, name='sale_summary'),
 ]

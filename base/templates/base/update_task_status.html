@@ -2,7 +2,7 @@
 
 {% block content %}
     <div class="update-task-container">
-        <h1>Task Status</h1>
+        <h1>{% if task.status == 'Completed' %}Review Task{% else %}Update Task Status{% endif %}</h1>
         
         <div class="form-group">
             <label for="task-title">Task:</label>
@@ -19,23 +19,42 @@
             <input type="text" id="due-date" value="{{ task.due_date }}" disabled>
         </div>
 
-        <div class="form-group">
-            <label>Submitted Document:</label>
-            {% if task.document %}
-                <a href="{{ task.document.url }}" target="_blank">View Document</a>
-            {% else %}
-                <p>No document submitted</p>
-            {% endif %}
-        </div>
-
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="document-upload">Upload Document:</label>
-                <input type="file" name="document" id="document-upload" required>
+        {% if task.status == 'Completed' %}
+            <!-- Review Section -->
+            <div class="review-section">
+                <h2>Submitted Documents</h2>
+                {% if task.document %}
+                    <div class="document-list">
+                        <div class="document-item">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Document submitted on {{ task.updated_at|date:"F d, Y H:i" }}</span>
+                            <a href="{{ task.document.url }}" target="_blank" class="view-document-btn">View Document</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="no-documents">No documents submitted for review.</p>
+                {% endif %}
             </div>
-            <button type="submit" class="update-button">Submit</button>
-        </form>
+        {% else %}
+            <!-- Update Status Section -->
+            <div class="form-group">
+                <label>Previously Submitted Document:</label>
+                {% if task.document %}
+                    <a href="{{ task.document.url }}" target="_blank" class="view-document-btn">View Document</a>
+                {% else %}
+                    <p>No document submitted</p>
+                {% endif %}
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="document-upload">Upload Document:</label>
+                    <input type="file" name="document" id="document-upload" required>
+                </div>
+                <button type="submit" class="update-button">Submit</button>
+            </form>
+        {% endif %}
 
         <div class="back-link">
             <a href="{% url 'agent_workpage' %}" class="back-button">Back to Workplace</a>
@@ -57,6 +76,12 @@
             font-size: 1.8rem;
             margin-bottom: 1.5rem;
             text-align: center;
+        }
+
+        h2 {
+            color: #2c5282;
+            font-size: 1.4rem;
+            margin: 1.5rem 0 1rem;
         }
 
         .form-group {
@@ -111,6 +136,61 @@
 
         .back-button:hover {
             background-color: #2d3748;
+        }
+
+        /* Review Section Styles */
+        .review-section {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .document-list {
+            margin-top: 1rem;
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: #f7fafc;
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .document-item i {
+            color: #4a5568;
+            font-size: 1.2rem;
+        }
+
+        .document-item span {
+            flex: 1;
+            color: #4a5568;
+        }
+
+        .view-document-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #4299e1;
+            color: white;
+            text-decoration: none;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+
+        .view-document-btn:hover {
+            background-color: #2b6cb0;
+        }
+
+        .no-documents {
+            text-align: center;
+            color: #718096;
+            font-style: italic;
+            padding: 1rem;
+            background-color: #f7fafc;
+            border-radius: 0.375rem;
         }
     </style>
 {% endblock %}

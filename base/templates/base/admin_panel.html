@@ -1,317 +1,524 @@
 {% extends 'main.html' %}
 
 {% block content %}
-<div class="admin-panel">
-    <h1>Admin Dashboard</h1>
+<div class="admin-dashboard">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <h1>Admin Dashboard</h1>
+        <p class="subtitle">Manage your real estate business efficiently</p>
+    </div>
 
-    <!-- Navigation Links as Icons -->
-    <div class="admin-links">
-        <a href="{% url 'property_list' %}" class="link-left">
-            <i class="fa fa-cogs"></i> Property Management
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'property_list' %}" class="action-card">
+            <div class="action-icon property">
+                <i class="fas fa-building"></i>
+            </div>
+            <div class="action-content">
+                <h3>Property Management</h3>
+                <p>Manage listings and properties</p>
+            </div>
         </a>
-        <a href="{% url 'assign_task' %}" class="link-center">
-            <i class="fa fa-tasks"></i> Task Allocation
+        <a href="{% url 'assign_task' %}" class="action-card">
+            <div class="action-icon task">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="action-content">
+                <h3>Task Allocation</h3>
+                <p>Assign and track tasks</p>
+            </div>
         </a>
-        <a href="{% url 'employee_list' %}" class="link-right">
-            <i class="fa fa-users"></i> User Management
+        <a href="{% url 'employee_list' %}" class="action-card">
+            <div class="action-icon user">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="action-content">
+                <h3>User Management</h3>
+                <p>Manage employees and roles</p>
+            </div>
         </a>
     </div>
 
-    <!-- Section 1: Agent Performance Metrics -->
-    <div class="agent-performance">
-        <h2>Agent Performance</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Agent</th>
-                    <th>Tasks Completed</th>
-                    <th>Sales Closed</th>
-                    <th>Aggregate Points</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for agent in employee_performance %}
-                <tr>
-                    <td>{{ agent.employee.user.get_full_name }}</td>
-                    <td>{{ agent.tasks_completed }}</td>
-                    <td>{{ agent.sales_closed }}</td>
-                    <td>{{ agent.aggregate_points }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4">No performance data available.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Side by Side Section: Property Status and Financial Overview -->
-    <div class="side-by-side">
-        <div class="property-status">
-            <h2>Property Status</h2>
-            <ul>
-                <li><strong>Total Properties:</strong> {{ property_status.total_properties }}</li>
-                <li><strong>Available Properties:</strong> {{ property_status.available_properties }}</li>
-                <li><strong>Sold Properties:</strong> {{ property_status.sold_properties }}</li>
-            </ul>
+    <!-- Overview Cards -->
+    <div class="overview-grid">
+        <!-- Property Status -->
+        <div class="overview-card">
+            <div class="card-header">
+                <h3>Property Status</h3>
+                <i class="fas fa-home"></i>
+            </div>
+            <div class="card-body">
+                <div class="stat-item">
+                    <span class="label">Total Properties</span>
+                    <span class="value">{{ property_status.total_properties }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Available</span>
+                    <span class="value">{{ property_status.available_properties }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Sold</span>
+                    <span class="value">{{ property_status.sold_properties }}</span>
+                </div>
+            </div>
         </div>
 
-        <div class="financial-overview">
-            <h2>Financial Overview</h2>
-            <ul>
-                <li><strong>Total Revenue:</strong> {{ financial_overview.total_revenue }}</li>
-                <li><strong>Total Expenses:</strong> {{ financial_overview.total_expenses }}</li>
-                <li><strong>Net Profit:</strong> {{ financial_overview.net_profit }}</li>
-            </ul>
+        <!-- Financial Overview -->
+        <div class="overview-card">
+            <div class="card-header">
+                <h3>Financial Overview</h3>
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="card-body">
+                <div class="stat-item">
+                    <span class="label">Total Revenue</span>
+                    <span class="value">₹{{ financial_overview.total_revenue|floatformat:2 }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Total Expenses</span>
+                    <span class="value">₹{{ financial_overview.total_expenses|floatformat:2 }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Net Profit</span>
+                    <span class="value">₹{{ financial_overview.net_profit|floatformat:2 }}</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Section 4: Recent Activities -->
-    <div class="recent-activities">
-        <h2>Recent Activities</h2>
+    <!-- Revenue Trends Chart -->
+    <div class="chart-section">
+        <div class="section-header">
+            <h2>Revenue Trends</h2>
+        </div>
+        <div class="chart-container">
+            <canvas id="revenueTrendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Activities Section -->
+    <div class="activities-section">
+        <div class="section-header">
+            <h2>Recent Activities</h2>
+        </div>
         
-        <!-- Recent Sales -->
-        <div class="recent-sales">
-            <h3>Recent Successful Sales</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Sale Price</th>
-                        <th>Sale Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for sale in recent_sales %}
-                    <tr>
-                        <td>{{ sale.property_listing }}</td>
-                        <td>{{ sale.sale_price }}</td>
-                        <td>{{ sale.sale_date }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3">No recent sales.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Recent Tasks -->
-        <div class="recent-tasks">
-            <h3>Recent Task Assignments</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Specifics</th>
-                        <th>Assigned To</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div class="activities-grid">
+            <!-- Recent Sales -->
+            <div class="activity-card">
+                <div class="card-header">
+                    <h3>Recent Sales</h3>
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Price</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in recent_sales %}
+                            <tr>
+                                <td>{{ sale.property_listing }}</td>
+                                <td>₹{{ sale.sale_price|floatformat:2 }}</td>
+                                <td>{{ sale.sale_date|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="no-data">No recent sales</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Tasks -->
+            <div class="activity-card">
+                <div class="card-header">
+                    <h3>Recent Tasks</h3>
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="tasks-grid">
                     {% for task in recent_tasks %}
-                    <tr>
-                        <td>{{ task.predefined_task }}</td>
-                        <td>{{ task.description }}</td>
-                        <td>{{ task.assigned_to.user.get_full_name }}</td>
-                        <td>{{ task.status }}</td>
-                    </tr>
+                    <div class="task-item {{ task.status|lower }}">
+                        <div class="task-header">
+                            <h4>{{ task.predefined_task }}</h4>
+                            <span class="status-badge {{ task.status|lower }}">{{ task.status }}</span>
+                        </div>
+                        <div class="task-info">
+                            <p><i class="fas fa-user"></i> {{ task.assigned_to.user.get_full_name }}</p>
+                            <p><i class="fas fa-calendar"></i> {{ task.due_date|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
                     {% empty %}
-                    <tr>
-                        <td colspan="4">No recent tasks.</td>
-                    </tr>
+                    <div class="no-data">No recent tasks</div>
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const revenueData = JSON.parse('{{ revenue_trends|escapejs }}');
+        
+        if (revenueData.labels.length > 0) {
+            const ctx = document.getElementById("revenueTrendChart").getContext("2d");
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: revenueData.labels,
+                    datasets: [
+                        {
+                            label: "Total Revenue",
+                            data: revenueData.total_revenue,
+                            borderColor: "rgb(54, 162, 235)",
+                            backgroundColor: "rgba(54, 162, 235, 0.1)",
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: "Total Expenses",
+                            data: revenueData.total_expenses,
+                            borderColor: "rgb(255, 99, 132)",
+                            backgroundColor: "rgba(255, 99, 132, 0.1)",
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: "Net Profit",
+                            data: revenueData.net_profit,
+                            borderColor: "rgb(75, 192, 192)",
+                            backgroundColor: "rgba(75, 192, 192, 0.1)",
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "top",
+                        },
+                        tooltip: {
+                            mode: "index",
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ₹${context.parsed.y.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString('en-IN', {maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+
 <style>
-    /* Admin Dashboard Main Container */
-.admin-panel {
-padding: 2rem;
-max-width: 1400px;
-margin: 0 auto;
-background-color: #f8f9fa;
-}
+    .admin-dashboard {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        background-color: #f8f9fa;
+    }
 
-.admin-panel h1 {
-color: #2c3e50;
-margin-bottom: 2rem;
-font-size: 2.5rem;
-font-weight: 600;
-text-align: center;
-}
+    .welcome-section {
+        margin-bottom: 2rem;
+    }
 
-/* Navigation Links */
-.admin-links {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 1.5rem;
-margin-bottom: 3rem;
-}
+    .welcome-section h1 {
+        font-size: 2rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
 
-.admin-links a {
-background-color: #ffffff;
-padding: 1.5rem;
-border-radius: 8px;
-text-decoration: none;
-color: #2c3e50;
-text-align: center;
-transition: all 0.3s ease;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 0.5rem;
-}
+    .subtitle {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
 
-.admin-links a:hover {
-transform: translateY(-2px);
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-background-color: #f8f9fa;
-}
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
 
-.admin-links i {
-font-size: 1.5rem;
-color: #3498db;
-}
+    .action-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
 
-/* Employee Performance Section */
-.employee-performance {
-background-color: #ffffff;
-padding: 2rem;
-border-radius: 8px;
-margin-bottom: 2rem;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
 
-.employee-performance h2 {
-color: #2c3e50;
-margin-bottom: 1.5rem;
-font-size: 1.5rem;
-}
+    .action-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
 
-/* Side by Side Sections */
-.side-by-side {
-display: grid;
-grid-template-columns: repeat(2, 1fr);
-gap: 2rem;
-margin-bottom: 2rem;
-}
+    .action-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
 
-.property-status,
-.financial-overview {
-background-color: #ffffff;
-padding: 2rem;
-border-radius: 8px;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+    .action-icon.property { background: #4CAF50; }
+    .action-icon.task { background: #2196F3; }
+    .action-icon.user { background: #9C27B0; }
 
-.property-status h2,
-.financial-overview h2 {
-color: #2c3e50;
-margin-bottom: 1.5rem;
-font-size: 1.5rem;
-}
+    .action-content h3 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
 
-.property-status ul,
-.financial-overview ul {
-list-style: none;
-padding: 0;
-}
+    .action-content p {
+        margin: 0.5rem 0 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
 
-.property-status li,
-.financial-overview li {
-margin-bottom: 1rem;
-color: #505965;
-}
+    .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
 
-/* Tables Styling */
-table {
-width: 100%;
-border-collapse: collapse;
-margin-top: 1rem;
-}
+    .overview-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
 
-thead {
-background-color: #f8f9fa;
-}
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
 
-th {
-padding: 1rem;
-text-align: left;
-color: #2c3e50;
-font-weight: 600;
-border-bottom: 2px solid #e9ecef;
-}
+    .card-header h3 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
 
-td {
-padding: 1rem;
-border-bottom: 1px solid #e9ecef;
-color: #505965;
-}
+    .card-header i {
+        font-size: 1.5rem;
+        color: #6c757d;
+    }
 
-/* Recent Activities Section */
-.recent-activities {
-background-color: #ffffff;
-padding: 2rem;
-border-radius: 8px;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+    }
 
-.recent-activities h2 {
-color: #2c3e50;
-margin-bottom: 2rem;
-font-size: 1.5rem;
-}
+    .stat-item:last-child {
+        border-bottom: none;
+    }
 
-.recent-sales,
-.recent-tasks {
-margin-bottom: 2rem;
-}
+    .stat-item .label {
+        color: #6c757d;
+    }
 
-.recent-sales h3,
-.recent-tasks h3 {
-color: #2c3e50;
-margin-bottom: 1rem;
-font-size: 1.25rem;
-}
+    .stat-item .value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-.admin-panel {
-    padding: 1rem;
-}
+    .chart-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
 
-.admin-links {
-    grid-template-columns: 1fr;
-}
+    .section-header {
+        margin-bottom: 1.5rem;
+    }
 
-.side-by-side {
-    grid-template-columns: 1fr;
-}
+    .section-header h2 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.5rem;
+    }
 
-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-}
-}
+    .chart-container {
+        height: 400px;
+    }
 
-/* Status Colors */
-.status-pending {
-color: #f39c12;
-}
+    .activities-section {
+        margin-bottom: 2rem;
+    }
 
-.status-completed {
-color: #27ae60;
-}
+    .activities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
 
-.status-in-progress {
-color: #3498db;
-}
+    .activity-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .data-table th {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .data-table tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .tasks-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .task-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        border-left: 4px solid #e2e8f0;
+    }
+
+    .task-item.pending { border-left-color: #f59e0b; }
+    .task-item.completed { border-left-color: #10b981; }
+    .task-item.overdue { border-left-color: #ef4444; }
+
+    .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .task-header h4 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-badge.pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.completed {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-badge.overdue {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .task-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .task-info p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .task-info i {
+        margin-right: 0.5rem;
+        color: #2c3e50;
+    }
+
+    .no-data {
+        text-align: center;
+        color: #6c757d;
+        padding: 2rem;
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .admin-dashboard {
+            padding: 1rem;
+        }
+
+        .quick-actions,
+        .overview-grid,
+        .activities-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+    }
 </style>
+
 {% endblock %}

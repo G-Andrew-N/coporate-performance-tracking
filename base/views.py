@@ -153,9 +153,37 @@ def home(request):
 
     # Property Metrics
     properties_sold = PropertyListing.objects.filter(status="Sold").count()
+    
+    # Property Status Distribution
+    property_status_data = {
+        'labels': ['Available', 'Sold', 'Under Contract'],
+        'data': [
+            PropertyListing.objects.filter(status='Available').count(),
+            PropertyListing.objects.filter(status='Sold').count(),
+            PropertyListing.objects.filter(status='Under Contract').count()
+        ]
+    }
 
     # Agent Performance (sorted by highest points)
     agent_performance = PerformanceMetrics.objects.select_related("employee__user").order_by("-aggregate_points")[:5]
+    
+    # Agent Performance Data for Chart
+    agent_performance_data = {
+        'labels': [metric.employee.user.get_full_name() for metric in agent_performance],
+        'tasks_completed': [metric.tasks_completed for metric in agent_performance],
+        'sales_closed': [metric.sales_closed for metric in agent_performance],
+        'aggregate_points': [metric.aggregate_points for metric in agent_performance]
+    }
+
+    # Monthly Sales Trend
+    current_year = now().year
+    monthly_sales = []
+    for month in range(1, 13):
+        count = Sale.objects.filter(
+            sale_date__year=current_year,
+            sale_date__month=month
+        ).count()
+        monthly_sales.append(count)
 
     # Sales Volume Trends (last 30 days)
     sales_data = [Sale.objects.filter(sale_date__day=i).count() for i in range(1, 31)]
@@ -163,15 +191,19 @@ def home(request):
     # Productivity Trends
     productivity_data = [agent.tasks_completed for agent in agent_performance]
 
-    # Revenue Trends (Convert to float for JSON serialization)
-    revenue_data = [
-        float(Sale.objects.filter(sale_date__month=i).aggregate(total=Sum("sale_price"))["total"] or 0)
-        for i in range(7, 13)
-    ]
+    # Revenue Trends Data
+    revenue_entries = Revenue.objects.all().order_by("year", "month")
+    revenue_trends = {
+        'labels': [f"{entry.year}-{entry.month:02d}" for entry in revenue_entries],
+        'total_revenue': [float(entry.total_revenue) for entry in revenue_entries],
+        'total_expenses': [float(entry.total_expenses) for entry in revenue_entries],
+        'net_profit': [float(entry.net_profit) for entry in revenue_entries]
+    }
 
     # Generate labels for charts
     last_30_days = [f"Day {i}" for i in range(1, 31)]
-    month_labels = ["July", "August", "September", "October", "November", "December"]
+    month_labels = ["January", "February", "March", "April", "May", "June", 
+                   "July", "August", "September", "October", "November", "December"]
 
     context = {
         "total_revenue": total_revenue,
@@ -188,9 +220,12 @@ def home(request):
         ],
         "sales_data": json.dumps(sales_data),  
         "productivity_data": json.dumps(productivity_data),  
-        "revenue_data": json.dumps(revenue_data),  
+        "revenue_trends": json.dumps(revenue_trends),  
         "last_30_days": json.dumps(last_30_days),  
-        "month_labels": json.dumps(month_labels),  
+        "month_labels": json.dumps(month_labels),
+        "property_status_data": json.dumps(property_status_data),
+        "agent_performance_data": json.dumps(agent_performance_data),
+        "monthly_sales": json.dumps(monthly_sales),
     }
 
     return render(request, "base/home.html", context)
@@ -536,12 +571,19 @@ def update_task_status(request, task_id):
     task = get_object_or_404(Task, id=task_id, assigned_to=request.user.employee)
     
     if request.method == 'POST' and 'document' in request.FILES:
-        task.document = request.FILES['document']
-        task.status = 'Completed'
-        task.save(update_fields=['document', 'status'])
-        return redirect('update_task_status', task_id=task.id)  # Reload page to reflect changes
+        # Only allow document upload if task is not completed
+        if task.status != 'Completed':
+            task.document = request.FILES['document']
+            task.status = 'Completed'
+            task.save(update_fields=['document', 'status'])
+            messages.success(request, 'Task completed successfully!')
+        return redirect('update_task_status', task_id=task.id)
     
-    # Determine task status automatically if no document was submitted
+    # For completed tasks, just show the review page
+    if task.status == 'Completed':
+        return render(request, 'base/update_task_status.html', {'task': task})
+    
+    # For non-completed tasks, determine status based on due date
     if not task.document:
         if task.due_date < now().date():
             task.status = 'Overdue'
@@ -549,8 +591,7 @@ def update_task_status(request, task_id):
             task.status = 'Pending'
         task.save(update_fields=['status'])
     
-    context = {'task': task}
-    return render(request, 'base/update_task_status.html', context)
+    return render(request, 'base/update_task_status.html', {'task': task})
 
 
 
@@ -576,7 +617,7 @@ def make_sale(request, property_id):
         agent = Employee.objects.get(user=request.user)
     except Employee.DoesNotExist:
         messages.error(request, "You are not registered as an employee.")
-        return redirect("some_error_page")
+        return redirect("property_list")  # Changed from "some_error_page"
     
     if request.method == 'POST':
         try:
@@ -638,15 +679,24 @@ def make_sale(request, property_id):
             property_listing.status = "Sold"
             property_listing.save()
 
+            # Get past sales for the agent
+            past_sales = Sale.objects.filter(agent=agent).exclude(id=sale.id).order_by('-sale_date')[:5]
+
             messages.success(request, f"Sale successful! Profit: {profit_amount:.2f} USD.")
-            return render(request, 'base/sale_confirmation.html', {'message': f"Sale successful! Profit: {profit_amount:.2f} USD."})
+            return render(request, 'base/sale_summary.html', {
+                'latest_sale': sale,
+                'past_sales': past_sales,
+            })
         
         except PropertyListing.DoesNotExist:
             messages.error(request, "Property not found.")
+            return redirect("property_list")
         except Employee.DoesNotExist:
             messages.error(request, "Agent not found.")
+            return redirect("property_list")
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
+            return redirect("property_list")
             
     return render(request, 'base/make_sale.html', {'property': property_listing})
 
@@ -690,12 +740,26 @@ def agent_workpage(request):
     except Employee.DoesNotExist:
         return render(request, 'base/error.html', {'message': 'Employee profile not found.'})
 
-    # Fetch tasks assigned to the agent
-    tasks = Task.objects.filter(assigned_to=employee)
+    # Fetch tasks assigned to the agent and categorize them
+    all_tasks = Task.objects.filter(assigned_to=employee)
+    
+    # Categorize tasks based on status and due date
+    today = now().date()
+    pending_tasks = []
+    overdue_tasks = []
+    completed_tasks = []
 
-    # Fetch available properties and apply pagination (e.g., 10 per page)
+    for task in all_tasks:
+        if task.status == 'Completed':
+            completed_tasks.append(task)
+        elif task.due_date < today:
+            overdue_tasks.append(task)
+        else:
+            pending_tasks.append(task)
+
+    # Fetch available properties and apply pagination
     property_list = PropertyListing.objects.filter(status='Available')
-    paginator = Paginator(property_list, 10)  # Show 10 properties per page
+    paginator = Paginator(property_list, 10)
     page_number = request.GET.get('page')
     properties = paginator.get_page(page_number)
 
@@ -705,12 +769,14 @@ def agent_workpage(request):
     # Fetch productivity data for the agent
     productivity_data = ProductivityTracker.objects.filter(employee=employee)
 
-    # Fetch sales made by the agent (✅ FIXED THIS LINE)
+    # Fetch sales made by the agent
     sales = Sale.objects.filter(agent=employee)
 
     context = {
-        'tasks': tasks,
-        'properties': properties,  # Now paginated
+        'pending_tasks': pending_tasks,
+        'overdue_tasks': overdue_tasks,
+        'completed_tasks': completed_tasks,
+        'properties': properties,
         'performance_metrics': performance_metrics,
         'productivity_data': productivity_data,
         'sales': sales,
@@ -750,6 +816,27 @@ def admin_panel(request):
         'net_profit': net_profit,
     }
 
+    # Revenue Trends Data - Get last 12 months of data
+    current_date = now()
+    revenue_data = Revenue.objects.filter(
+        Q(year=current_date.year) |
+        Q(year=current_date.year - 1, month__gt=current_date.month)
+    ).order_by('year', 'month')
+
+    # Format data for the chart
+    revenue_trends = {
+        'labels': [],
+        'total_revenue': [],
+        'total_expenses': [],
+        'net_profit': []
+    }
+
+    for revenue in revenue_data:
+        revenue_trends['labels'].append(f"{revenue.year}-{revenue.month:02d}")
+        revenue_trends['total_revenue'].append(float(revenue.total_revenue))
+        revenue_trends['total_expenses'].append(float(revenue.total_expenses))
+        revenue_trends['net_profit'].append(float(revenue.net_profit))
+
     # Recent Activities
     recent_sales = Sale.objects.select_related('property_listing').order_by('-sale_date')[:5]
     recent_tasks = Task.objects.select_related('assigned_to__user').order_by('-due_date')[:5]
@@ -758,6 +845,7 @@ def admin_panel(request):
         'employee_performance': employee_performance,
         'property_status': property_status,
         'financial_overview': financial_overview,
+        'revenue_trends': json.dumps(revenue_trends),
         'recent_sales': recent_sales,
         'recent_tasks': recent_tasks,
     }
@@ -830,32 +918,71 @@ def predict_property_price(request):
             'locations': available_locations
         })
 
-    features = []  # X-axis (features: floors, coveredArea)
-    prices = []  # Y-axis (price)
-
+    # Prepare data for graphs
+    property_data_list = []
     for property in property_data:
         try:
             covered_area = float(property.coveredArea.replace('sqft', '').strip())
-        except ValueError:
+            property_data_list.append({
+                'x': covered_area,
+                'y': float(property.price)
+            })
+        except (ValueError, AttributeError):
+            continue
+
+    # Calculate average prices by number of floors
+    floors_data = {}
+    for property in property_data:
+        floors = property.floors
+        if floors not in floors_data:
+            floors_data[floors] = {'total': 0, 'count': 0}
+        floors_data[floors]['total'] += float(property.price)
+        floors_data[floors]['count'] += 1
+
+    floors_labels = []
+    floors_values = []
+    for floors in sorted(floors_data.keys()):
+        floors_labels.append(f'{floors} Floors')
+        floors_values.append(round(floors_data[floors]['total'] / floors_data[floors]['count'], 2))
+
+    # Calculate average prices by location
+    location_data = {}
+    for property in property_data:
+        location = property.location
+        if location not in location_data:
+            location_data[location] = {'total': 0, 'count': 0}
+        location_data[location]['total'] += float(property.price)
+        location_data[location]['count'] += 1
+
+    location_labels = []
+    location_values = []
+    for location in sorted(location_data.keys()):
+        location_labels.append(location)
+        location_values.append(round(location_data[location]['total'] / location_data[location]['count'], 2))
+
+    # Prepare features for prediction
+    features = []
+    prices = []
+    for property in property_data:
+        try:
+            covered_area = float(property.coveredArea.replace('sqft', '').strip())
+        except (ValueError, AttributeError):
             continue
         features.append([property.floors, covered_area])
-        prices.append(property.price)
+        prices.append(float(property.price))
 
-    if len(features) < 2:  # Ensure enough data points for training
+    if len(features) < 2:
         return render(request, 'base/predictive_analysis.html', {
             'message': 'Not enough data for prediction.',
             'locations': available_locations
         })
 
-    # Convert to NumPy arrays
+    # Train model and make prediction
     X = np.array(features)
     y = np.array(prices)
-
-    # Train linear regression model
     model = LinearRegression()
     model.fit(X, y)
 
-    # Handle user-defined inputs for prediction
     try:
         input_floors = int(selected_floors) if selected_floors else 2
         input_area = float(selected_area) if selected_area else 1500
@@ -867,13 +994,21 @@ def predict_property_price(request):
             'locations': available_locations
         })
 
-    return render(request, 'base/predictive_analysis.html', {
+    # Convert data to JSON for template
+    context = {
         'predicted_price': round(predicted_price, 2),
         'locations': available_locations,
         'selected_location': selected_location,
         'selected_floors': selected_floors,
-        'selected_area': selected_area
-    })
+        'selected_area': selected_area,
+        'property_data': json.dumps(property_data_list),
+        'floors_labels': json.dumps(floors_labels),
+        'floors_data': json.dumps(floors_values),
+        'location_labels': json.dumps(location_labels),
+        'location_data': json.dumps(location_values)
+    }
+
+    return render(request, 'base/predictive_analysis.html', context)
 
 
 
@@ -894,3 +1029,33 @@ def revenue_dashboard(request):
     }
 
     return render(request, "base/revenue_dashboard.html", {"revenue_chart_data": json.dumps(revenue_chart_data)})
+
+@login_required
+def sale_summary(request):
+    try:
+        # Get the logged-in agent
+        agent = Employee.objects.get(user=request.user)
+        
+        # Get the latest sale
+        latest_sale = Sale.objects.filter(agent=agent).order_by('-sale_date').first()
+        
+        if not latest_sale:
+            messages.info(request, "No sales found.")
+            return redirect('property_list')
+        
+        # Get past sales (excluding the latest one)
+        past_sales = Sale.objects.filter(agent=agent).exclude(id=latest_sale.id).order_by('-sale_date')[:5]
+        
+        context = {
+            'latest_sale': latest_sale,
+            'past_sales': past_sales,
+        }
+        
+        return render(request, 'base/sale_summary.html', context)
+        
+    except Employee.DoesNotExist:
+        messages.error(request, "You are not registered as an employee.")
+        return redirect('login')
+    except Exception as e:
+        messages.error(request, f"Error: {str(e)}")
+        return redirect('property_list')

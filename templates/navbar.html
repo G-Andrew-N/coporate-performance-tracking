@@ -2,7 +2,7 @@
     <div class="navbar-container">
         <!-- Left: Brand Logo -->
         <div class="navbar-brand">
-            <a href="{% url 'home' %}">RETS</a>
+            <a href="{% url 'home' %}">🏠 RETS</a>
         </div>
 
         <!-- Center: Menu Links -->
@@ -10,40 +10,40 @@
             <ul class="navbar-links">
                 {% if user.is_authenticated %}
                     {% if user.is_superuser %}
-                        <li><a href="{% url 'admin_panel' %}" class="nav-link">Admin Workspace</a></li>
-                        <li><a href="{% url 'property_list' %}" class="nav-link">Properties</a></li>
-                        <li><a href="{% url 'predict_property_price' %}" class="nav-link">Pricing Predictions</a></li>
-                        <li><a href="{% url 'home' %}" class="nav-link">Dashboard</a></li>
+                        <li><a href="{% url 'admin_panel' %}" class="nav-link"><span class="emoji">👑</span> Admin Workspace</a></li>
+                        <li><a href="{% url 'property_list' %}" class="nav-link"><span class="emoji">🏢</span> Properties</a></li>
+                        <li><a href="{% url 'predict_property_price' %}" class="nav-link"><span class="emoji">📊</span> Pricing Predictions</a></li>
+                        <li><a href="{% url 'home' %}" class="nav-link"><span class="emoji">📈</span> Dashboard</a></li>
                     {% elif user.is_staff %}
-                        <li><a href="{% url 'agent_workpage' %}" class="nav-link">My Workspace</a></li>
-                        <li><a href="{% url 'predict_property_price' %}" class="nav-link">Pricing Predictions</a></li>
-                        <li><a href="{% url 'home' %}" class="nav-link">Dashboard</a></li>
+                        <li><a href="{% url 'agent_workpage' %}" class="nav-link"><span class="emoji">💼</span> My Workspace</a></li>
+                        <li><a href="{% url 'predict_property_price' %}" class="nav-link"><span class="emoji">📊</span> Pricing Predictions</a></li>
+                        <li><a href="{% url 'home' %}" class="nav-link"><span class="emoji">📈</span> Dashboard</a></li>
                     {% else %}
-                        <li><a href="{% url 'agent_workpage' %}" class="nav-link">My Workspace</a></li>
-                        <li><a href="{% url 'property_list' %}" class="nav-link">Properties</a></li>
-                        <li><a href="{% url 'task_performance' %}" class="nav-link">Tasks</a></li>
+                        <li><a href="{% url 'agent_workpage' %}" class="nav-link"><span class="emoji">💼</span> My Workspace</a></li>
+                        <li><a href="{% url 'property_list' %}" class="nav-link"><span class="emoji">🏢</span> Properties</a></li>
+                        <li><a href="{% url 'task_performance' %}" class="nav-link"><span class="emoji">✅</span> Tasks</a></li>
                     {% endif %}
                 {% else %}
                     <!-- Guest Users -->
-                    <li><a href="{% url 'login' %}" class="nav-link">Login</a></li>
-                    <li><a href="{% url 'signup' %}" class="nav-link">Sign Up</a></li>
+                    <li><a href="{% url 'login' %}" class="nav-link"><span class="emoji">🔑</span> Login</a></li>
+                    <li><a href="{% url 'signup' %}" class="nav-link"><span class="emoji">📝</span> Sign Up</a></li>
                 {% endif %}
             </ul>
         </div>
 
         <!-- Right: User Profile Dropdown -->
         {% if user.is_authenticated %}
-        <!-- User Profile Dropdown -->
         <div class="navbar-user">
             <div class="user-menu">
-                <button class="user-button" onclick="toggleDropdown()">{{ user.get_full_name }} ▼</button>
+                <button class="user-button" onclick="toggleDropdown()">
+                    <span class="emoji">👤</span> {{ user.get_full_name }} ▼
+                </button>
                 <div class="dropdown-menu" id="dropdownMenu">
-                    <a href="{% url 'user_profile' %}" class="dropdown-item">Profile</a>
-                    <a href="{% url 'logout_view' %}" class="dropdown-item">Logout</a>
+                    <a href="{% url 'user_profile' %}" class="dropdown-item"><span class="emoji">👤</span> Profile</a>
+                    <a href="{% url 'logout_view' %}" class="dropdown-item"><span class="emoji">🚪</span> Logout</a>
                 </div>
             </div>
         </div>
-
         {% endif %}
 
         <!-- Mobile Menu Button -->
@@ -54,198 +54,254 @@
         </button>
     </div>
 </nav>
+
 <style>
-
     /* General Navbar Styling */
-.navbar {
-    background-color: #121212; /* Dark, professional look */
-    padding: 1rem 2rem;
-    position: sticky;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    font-family: 'Poppins', sans-serif; /* Modern font */
-}
+    .navbar {
+        background-color: #121212;
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        font-family: 'Poppins', sans-serif;
+    }
 
-/* Navbar Container */
-.navbar-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1300px;
-    margin: 0 auto;
-}
+    /* Navbar Container */
+    .navbar-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1300px;
+        margin: 0 auto;
+    }
 
-/* Brand Logo */
-.navbar-brand a {
-    color: #fff;
-    font-size: 1.8rem;
-    font-weight: bold;
-    text-decoration: none;
-    transition: color 0.3s ease-in-out;
-}
+    /* Brand Logo */
+    .navbar-brand a {
+        color: #fff;
+        font-size: 1.8rem;
+        font-weight: bold;
+        text-decoration: none;
+        transition: all 0.3s ease-in-out;
+    }
 
-.navbar-brand a:hover {
-    color: #f0f0f0;
-}
+    .navbar-brand a:hover {
+        color: #f0f0f0;
+        transform: scale(1.05);
+    }
 
-/* Menu Wrapper */
-.menu-wrapper {
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-}
-
-/* Centered Menu Links */
-.navbar-links {
-    display: flex;
-    gap: 1.8rem; /* Well-spaced links */
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-/* Navigation Links */
-.nav-link {
-    color: #ddd;
-    text-decoration: none;
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
-}
-
-.nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-/* User Section */
-.navbar-user {
-    display: flex;
-    align-items: center;
-}
-
-/* User Dropdown Button */
-.user-button {
-    background: none;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
-    font-weight: 600;
-    transition: color 0.3s ease-in-out;
-}
-
-.user-button:hover {
-    color: #f0f0f0;
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: #2a2a2a;
-    border-radius: 5px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    min-width: 160px;
-    z-index: 1001;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-}
-
-/* When dropdown is active */
-.dropdown-menu.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.user-menu:hover .dropdown-menu {
-    display: block;
-}
-
-.dropdown-item {
-    display: block;
-    padding: 0.75rem 1rem;
-    color: #ddd;
-    text-decoration: none;
-    transition: background 0.3s;
-}
-
-.dropdown-item:hover {
-    background: #333;
-}
-
-/* Mobile Menu */
-.mobile-menu-button {
-    display: none;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-.bar {
-    display: block;
-    width: 25px;
-    height: 3px;
-    margin: 5px 0;
-    background-color: #fff;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
+    /* Menu Wrapper */
     .menu-wrapper {
-        display: none;
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Centered Menu Links */
+    .navbar-links {
+        display: flex;
+        gap: 1.8rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Navigation Links */
+    .nav-link {
+        color: #ddd;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        transition: all 0.3s ease-in-out;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        transform: translateY(-2px);
+    }
+
+    .nav-link .emoji {
+        font-size: 1.2rem;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .nav-link:hover .emoji {
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    /* User Section */
+    .navbar-user {
+        display: flex;
+        align-items: center;
+    }
+
+    /* User Dropdown Button */
+    .user-button {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease-in-out;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-button:hover {
+        color: #f0f0f0;
+        transform: translateY(-2px);
+    }
+
+    .user-button .emoji {
+        font-size: 1.2rem;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .user-button:hover .emoji {
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    /* Dropdown Menu */
+    .dropdown-menu {
         position: absolute;
         top: 100%;
-        left: 0;
         right: 0;
-        background: #222;
-        padding: 1rem;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
+        background: #2a2a2a;
+        border-radius: 5px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        min-width: 160px;
+        z-index: 1001;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease-in-out;
     }
 
-    .menu-wrapper.active {
-        display: flex;
+    .dropdown-menu.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
     }
 
-    .navbar-links {
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .navbar-user {
-        justify-content: center;
-        width: 100%;
-        margin-top: 10px;
-    }
-
-    .user-menu {
-        text-align: center;
-    }
-
-    .mobile-menu-button {
+    .user-menu:hover .dropdown-menu {
         display: block;
     }
-}
 
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        color: #ddd;
+        text-decoration: none;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .dropdown-item:hover {
+        background: #333;
+        transform: translateX(5px);
+    }
+
+    .dropdown-item .emoji {
+        font-size: 1.2rem;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .dropdown-item:hover .emoji {
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    /* Mobile Menu */
+    .mobile-menu-button {
+        display: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .bar {
+        display: block;
+        width: 25px;
+        height: 3px;
+        margin: 5px 0;
+        background-color: #fff;
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .menu-wrapper {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #222;
+            padding: 1rem;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .menu-wrapper.active {
+            display: flex;
+        }
+
+        .navbar-links {
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .navbar-user {
+            justify-content: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .user-menu {
+            text-align: center;
+        }
+
+        .mobile-menu-button {
+            display: block;
+        }
+
+        .mobile-menu-button.active .bar:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-menu-button.active .bar:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-button.active .bar:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+    }
 </style>
-
 
 <script>
     function toggleDropdown() {
         const dropdown = document.getElementById("dropdownMenu");
         dropdown.classList.toggle("active");
+    }
+
+    function toggleMenu() {
+        const menuWrapper = document.querySelector(".menu-wrapper");
+        const mobileButton = document.querySelector(".mobile-menu-button");
+        menuWrapper.classList.toggle("active");
+        mobileButton.classList.toggle("active");
     }
 
     // Close the dropdown if clicked outside
@@ -256,5 +312,16 @@
         if (!dropdown.contains(event.target) && !button.contains(event.target)) {
             dropdown.classList.remove("active");
         }
+    });
+
+    // Add hover effect to emojis
+    document.querySelectorAll('.emoji').forEach(emoji => {
+        emoji.addEventListener('mouseover', function() {
+            this.style.transform = 'scale(1.2) rotate(5deg)';
+        });
+        
+        emoji.addEventListener('mouseout', function() {
+            this.style.transform = 'scale(1) rotate(0deg)';
+        });
     });
 </script>

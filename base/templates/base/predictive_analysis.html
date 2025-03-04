@@ -1,14 +1,15 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Predictive Analysis</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">Predictive Analysis</h1>
+        <h1 class="text-center">📊 Predictive Analysis</h1>
 
         {% if message %}
             <div class="alert alert-warning">{{ message }}</div>
@@ -17,7 +18,7 @@
         <!-- Prediction Form -->
         <div class="card mt-4">
             <div class="card-header bg-secondary text-white">
-                Property Price Prediction - Select Criteria
+                🏠 Property Price Prediction - Select Criteria
             </div>
             <div class="card-body">
                 <form method="GET" action="{% url 'predict_property_price' %}">
@@ -40,7 +41,7 @@
                             <input type="number" name="covered_area" class="form-control" placeholder="e.g. 1500" value="{{ selected_area }}">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Predict Price</button>
+                    <button type="submit" class="btn btn-primary">🔮 Predict Price</button>
                 </form>
             </div>
         </div>
@@ -49,13 +50,150 @@
         {% if predicted_price %}
         <div class="card mt-4">
             <div class="card-header bg-info text-white">
-                Predicted Property Price
+                💰 Predicted Property Price
             </div>
             <div class="card-body">
                 <p>The estimated price for the selected property criteria is: <strong>${{ predicted_price }}</strong></p>
             </div>
         </div>
+
+        <!-- Price Prediction Graphs -->
+        <div class="row mt-4">
+            <!-- Price vs Area Graph -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        📈 Price vs Area Analysis
+                    </div>
+                    <div class="card-body">
+                        <canvas id="priceAreaChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Price vs Floors Graph -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        🏗️ Price vs Floors Analysis
+                    </div>
+                    <div class="card-body">
+                        <canvas id="priceFloorsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location-wise Price Distribution -->
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                📍 Location-wise Price Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="locationPriceChart"></canvas>
+            </div>
+        </div>
         {% endif %}
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if predicted_price and property_data %}
+            // Parse JSON data
+            const propertyData = JSON.parse('{{ property_data|escapejs }}');
+            const floorsLabels = JSON.parse('{{ floors_labels|escapejs }}');
+            const floorsData = JSON.parse('{{ floors_data|escapejs }}');
+            const locationLabels = JSON.parse('{{ location_labels|escapejs }}');
+            const locationData = JSON.parse('{{ location_data|escapejs }}');
+
+            // Price vs Area Chart
+            const priceAreaCtx = document.getElementById('priceAreaChart').getContext('2d');
+            new Chart(priceAreaCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Price vs Area',
+                        data: propertyData,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Covered Area (sqft)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Price ($)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Price vs Floors Chart
+            const priceFloorsCtx = document.getElementById('priceFloorsChart').getContext('2d');
+            new Chart(priceFloorsCtx, {
+                type: 'bar',
+                data: {
+                    labels: floorsLabels,
+                    datasets: [{
+                        label: 'Average Price by Floors',
+                        data: floorsData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Average Price ($)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Location-wise Price Distribution
+            const locationPriceCtx = document.getElementById('locationPriceChart').getContext('2d');
+            new Chart(locationPriceCtx, {
+                type: 'bar',
+                data: {
+                    labels: locationLabels,
+                    datasets: [{
+                        label: 'Average Price by Location',
+                        data: locationData,
+                        backgroundColor: 'rgba(255, 206, 86, 0.5)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Average Price ($)'
+                            }
+                        }
+                    }
+                }
+            });
+            {% endif %}
+        });
+    </script>
 </body>
 </html>
+

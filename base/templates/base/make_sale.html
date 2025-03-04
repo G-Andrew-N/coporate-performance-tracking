@@ -1,334 +1,557 @@
 {% extends 'main.html' %}
 
 {% block content %}
-<div class="container">
-    <h1>Make Sale for {{ property.property_type }} - {{ property.location }}</h1>
+<div class="sale-container">
+    <!-- Header Section -->
+    <div class="sale-header">
+        <div class="header-content">
+            <h1>Make Sale</h1>
+            <div class="property-info">
+                <i class="fas fa-building"></i>
+                <div class="property-details">
+                    <span class="property-type">{{ property.property_type }}</span>
+                    <span class="property-location">{{ property.location }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <form method="POST" class="sale-form">
         {% csrf_token %}
         
         <!-- Buyer Details Section -->
-        <div class="section-header">Buyer Details</div>
-        <div class="form-group">
-            <label for="buyer_name">Buyer's Name</label>
-            <input type="text" name="buyer_name" id="buyer_name" placeholder="Enter Buyer's Name" required>
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-user"></i>
+                <h2>Buyer Details</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="buyer_name">Buyer's Name</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" name="buyer_name" id="buyer_name" placeholder="Enter Buyer's Name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="buyer_id">ID</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" name="buyer_id" id="buyer_id" placeholder="Enter ID" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="buyer_email">Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" name="buyer_email" id="buyer_email" placeholder="Enter Email" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="buyer_tel">TEL</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" name="buyer_tel" id="buyer_tel" placeholder="Enter TEL" required>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label for="buyer_address">Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" name="buyer_address" id="buyer_address" placeholder="Enter Address" required>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="buyer_id">ID</label>
-            <input type="text" name="buyer_id" id="buyer_id" placeholder="Enter ID" required>
-        </div>
-        <div class="form-group">
-            <label for="buyer_email">Email</label>
-            <input type="email" name="buyer_email" id="buyer_email" placeholder="Enter Email" required>
-        </div>
-        <div class="form-group">
-            <label for="buyer_tel">TEL</label>
-            <input type="tel" name="buyer_tel" id="buyer_tel" placeholder="Enter TEL" required>
-        </div>
-        <div class="form-group">
-            <label for="buyer_address">Address</label>
-            <input type="text" name="buyer_address" id="buyer_address" placeholder="Enter Address" required>
-        </div>
-        <div class="form-group">
-            <label>Payment Method</label>
+
+        <!-- Payment Method Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-credit-card"></i>
+                <h2>Payment Method</h2>
+            </div>
             <div class="payment-methods">
-                <label><input type="radio" name="payment_method" value="paypal" required> PayPal</label>
-                <label><input type="radio" name="payment_method" value="mortgage" required> Mortgage</label>
-                <label><input type="radio" name="payment_method" value="card" required> Card</label>
-                <label><input type="radio" name="payment_method" value="cash" required> Cash</label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="paypal" required>
+                    <span class="payment-icon"><i class="fab fa-paypal"></i></span>
+                    <span class="payment-label">PayPal</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="mortgage" required>
+                    <span class="payment-icon"><i class="fas fa-home"></i></span>
+                    <span class="payment-label">Mortgage</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="card" required>
+                    <span class="payment-icon"><i class="fas fa-credit-card"></i></span>
+                    <span class="payment-label">Card</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="cash" required>
+                    <span class="payment-icon"><i class="fas fa-money-bill-wave"></i></span>
+                    <span class="payment-label">Cash</span>
+                </label>
             </div>
         </div>
 
         <!-- Seller Details Section -->
-        <div class="section-header">Seller Details</div>
-        <div class="form-group">
-            <label for="seller_name">Seller's Name</label>
-            <input type="text" name="seller_name" id="seller_name" placeholder="Enter Seller's Name" required>
-        </div>
-        <div class="form-group">
-            <label for="seller_tel">TEL</label>
-            <input type="tel" name="seller_tel" id="seller_tel" placeholder="Enter TEL" required>
-        </div>
-        <div class="form-group">
-            <label for="seller_email">Email</label>
-            <input type="email" name="seller_email" id="seller_email" placeholder="Enter Email" required>
-        </div>
-        <div class="form-group">
-            <label for="seller_address">Address</label>
-            <input type="text" name="seller_address" id="seller_address" placeholder="Enter Address" required>
-        </div>
-        <div class="form-group">
-            <label for="ownership_verification">Ownership Verification</label>
-            <input type="text" name="ownership_verification" id="ownership_verification" placeholder="Enter Ownership Verification" required>
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-user-tie"></i>
+                <h2>Seller Details</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="seller_name">Seller's Name</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user-tie"></i>
+                        <input type="text" name="seller_name" id="seller_name" placeholder="Enter Seller's Name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="seller_tel">TEL</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" name="seller_tel" id="seller_tel" placeholder="Enter TEL" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="seller_email">Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" name="seller_email" id="seller_email" placeholder="Enter Email" required>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label for="seller_address">Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" name="seller_address" id="seller_address" placeholder="Enter Address" required>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label for="ownership_verification">Ownership Verification</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-file-contract"></i>
+                        <input type="text" name="ownership_verification" id="ownership_verification" placeholder="Enter Ownership Verification" required>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Property Details Section -->
-        <div class="section-header">Property Details</div>
-        <div class="form-group">
-            <label for="property_type">Property Type</label>
-            <input type="text" name="property_type" id="property_type" value="{{ property.property_type }}" readonly>
-        </div>
-        <div class="form-group">
-            <label for="property_size">Property Size</label>
-            <input type="text" name="property_size" id="property_size" value="{{ property.size }}" readonly>
-        </div>
-        <div class="form-group">
-            <label for="property_location">Location</label>
-            <input type="text" name="property_location" id="property_location" value="{{ property.location }}" readonly>
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-home"></i>
+                <h2>Property Details</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="property_type">Property Type</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-building"></i>
+                        <input type="text" name="property_type" id="property_type" value="{{ property.property_type }}" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="property_size">Property Size</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-ruler-combined"></i>
+                        <input type="text" name="property_size" id="property_size" value="{{ property.size }}" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="property_location">Location</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" name="property_location" id="property_location" value="{{ property.location }}" readonly>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Legal Documentation Section -->
-        <div class="section-header">Legal Documentation</div>
-        <div class="form-group">
-            <label for="title_deed">Title/Deed Number</label>
-            <input type="text" name="title_deed" id="title_deed" placeholder="Enter Title/Deed Number" required>
-        </div>
-        <div class="form-group">
-            <label for="tax_id">Tax ID</label>
-            <input type="text" name="tax_id" id="tax_id" placeholder="Enter Tax ID" required>
-        </div>
-        <div class="form-group">
-            <label for="survey_number">Survey/Plot Number</label>
-            <input type="text" name="survey_number" id="survey_number" placeholder="Enter Survey/Plot Number" required>
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-file-alt"></i>
+                <h2>Legal Documentation</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="title_deed">Title/Deed Number</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-file-contract"></i>
+                        <input type="text" name="title_deed" id="title_deed" placeholder="Enter Title/Deed Number" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tax_id">Tax ID</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <input type="text" name="tax_id" id="tax_id" placeholder="Enter Tax ID" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="survey_number">Survey/Plot Number</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-map"></i>
+                        <input type="text" name="survey_number" id="survey_number" placeholder="Enter Survey/Plot Number" required>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Pricing Info Section -->
-        <div class="section-header">Pricing Info</div>
-        <div class="form-group">
-            <label for="sale_date">Sale Date</label>
-            <input type="date" name="sale_date" id="sale_date" required>
-        </div>
-        <div class="form-group">
-            <label for="sale_price">Sale Price</label>
-            <input type="number" name="sale_price" id="sale_price" step="0.01" required>
-        </div>
-        <div class="form-group">
-            <label for="title_insurance">Title Insurance</label>
-            <input type="text" name="title_insurance" id="title_insurance" placeholder="Enter Title Insurance" required>
-        </div>
-        <div class="form-group">
-            <label for="legal_fees">Legal Fees</label>
-            <input type="text" name="legal_fees" id="legal_fees" placeholder="Enter Legal Fees" required>
-        </div>
-        <div class="form-group">
-            <label for="deposit">Deposit</label>
-            <input type="text" name="deposit" id="deposit" placeholder="Enter Deposit" required>
-        </div>
-        <div class="form-group">
-            <label for="closing_date">Closing Date</label>
-            <input type="date" name="closing_date" id="closing_date" required>
+        <div class="form-section">
+            <div class="section-header">
+                <i class="fas fa-money-bill-wave"></i>
+                <h2>Pricing Info</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="sale_date">Sale Date</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-calendar"></i>
+                        <input type="date" name="sale_date" id="sale_date" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sale_price">Sale Price</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-rupee-sign"></i>
+                        <input type="number" name="sale_price" id="sale_price" step="0.01" placeholder="Enter Sale Price" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="title_insurance">Title Insurance</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-shield-alt"></i>
+                        <input type="text" name="title_insurance" id="title_insurance" placeholder="Enter Title Insurance" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="legal_fees">Legal Fees</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-gavel"></i>
+                        <input type="text" name="legal_fees" id="legal_fees" placeholder="Enter Legal Fees" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="deposit">Deposit</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <input type="text" name="deposit" id="deposit" placeholder="Enter Deposit" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="closing_date">Closing Date</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-calendar-check"></i>
+                        <input type="date" name="closing_date" id="closing_date" required>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Confirm Sale Section -->
+        <!-- Form Actions -->
         <div class="form-actions">
-            <button type="submit" class="btn confirm-btn">Confirm Sale</button>
-            <a href="{% url 'property_list' %}" class="btn cancel-btn">Cancel</a>
+            <button type="submit" class="btn confirm-btn">
+                <i class="fas fa-check"></i>
+                Confirm Sale
+            </button>
+            <a href="{% url 'property_list' %}" class="btn cancel-btn">
+                <i class="fas fa-times"></i>
+                Cancel
+            </a>
         </div>
     </form>
 
     {% if error %}
-    <p class="error-message">{{ error }}</p>
+    <div class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        <p>{{ error }}</p>
+    </div>
     {% endif %}
 </div>
+
 <style>
-    /* Form Container */
-.container {
-    max-width: 1000px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background-color: #f7fafc;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
+    .sale-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: #f8f9fa;
+    }
 
-.container h1 {
-    color: #1a365d;
-    font-size: 1.875rem;
-    font-weight: 600;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e2e8f0;
-}
+    /* Header Section */
+    .sale-header {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
 
-/* Form Layout */
-.sale-form {
-    background: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-}
+    .header-content h1 {
+        font-size: 2rem;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
 
-.section-header {
-    color: #2c5282;
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 2rem 0 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-.section-header:first-of-type {
-    margin-top: 0;
-}
-
-/* Form Groups */
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    color: #4a5568;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="tel"],
-.form-group input[type="number"],
-.form-group input[type="date"] {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.375rem;
-    font-size: 1rem;
-    color: #2d3748;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #4299e1;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
-}
-
-.form-group input[readonly] {
-    background-color: #edf2f7;
-    cursor: not-allowed;
-}
-
-/* Payment Methods */
-.payment-methods {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-
-.payment-methods label {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem;
-    background-color: #f7fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.payment-methods label:hover {
-    background-color: #edf2f7;
-}
-
-.payment-methods input[type="radio"] {
-    margin-right: 0.5rem;
-}
-
-/* Form Actions */
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid #e2e8f0;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.confirm-btn {
-    background-color: #4299e1;
-    color: white;
-    border: none;
-}
-
-.confirm-btn:hover {
-    background-color: #2b6cb0;
-}
-
-.cancel-btn {
-    background-color: #fff;
-    color: #4a5568;
-    border: 1px solid #e2e8f0;
-    text-decoration: none;
-}
-
-.cancel-btn:hover {
-    background-color: #f7fafc;
-    color: #2d3748;
-}
-
-/* Error Message */
-.error-message {
-    margin-top: 1rem;
-    padding: 1rem;
-    background-color: #fff5f5;
-    color: #c53030;
-    border-left: 4px solid #e53e3e;
-    border-radius: 0.25rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .container {
+    .property-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
         padding: 1rem;
-        margin: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
     }
 
-    .sale-form {
-        padding: 1rem;
+    .property-info i {
+        font-size: 1.5rem;
+        color: #3b82f6;
+        background: #eff6ff;
+        padding: 0.75rem;
+        border-radius: 8px;
     }
 
-    .payment-methods {
-        grid-template-columns: 1fr;
-    }
-
-    .form-actions {
+    .property-details {
+        display: flex;
         flex-direction: column;
     }
 
-    .btn {
-        width: 100%;
-        text-align: center;
+    .property-type {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
     }
-}
 
-/* Print Styles */
-@media print {
-    .container {
+    .property-location {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    /* Form Sections */
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .section-header i {
+        font-size: 1.25rem;
+        color: #3b82f6;
+    }
+
+    .section-header h2 {
         margin: 0;
-        padding: 0;
+        color: #2c3e50;
+        font-size: 1.25rem;
     }
 
-    .sale-form {
-        box-shadow: none;
-        padding: 0;
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
     }
 
-    .btn {
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        display: block;
+        color: #4a5568;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        color: #6c757d;
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #2c3e50;
+        transition: all 0.2s;
+    }
+
+    .input-wrapper input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .input-wrapper input[readonly] {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+
+    /* Payment Methods */
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .payment-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .payment-option:hover {
+        background: #eff6ff;
+        border-color: #3b82f6;
+    }
+
+    .payment-option input[type="radio"] {
         display: none;
     }
 
-    .form-group input {
-        border: none;
-        padding: 0.25rem 0;
+    .payment-option input[type="radio"]:checked + .payment-icon {
+        color: #3b82f6;
     }
-}
+
+    .payment-option input[type="radio"]:checked + .payment-icon + .payment-label {
+        color: #3b82f6;
+    }
+
+    .payment-icon {
+        font-size: 1.25rem;
+        color: #6c757d;
+        transition: color 0.2s;
+    }
+
+    .payment-label {
+        font-weight: 500;
+        color: #4a5568;
+        transition: color 0.2s;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .confirm-btn {
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+    }
+
+    .confirm-btn:hover {
+        background-color: #2563eb;
+    }
+
+    .cancel-btn {
+        background-color: #fff;
+        color: #4a5568;
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+    }
+
+    .cancel-btn:hover {
+        background-color: #f8f9fa;
+        color: #2c3e50;
+    }
+
+    /* Error Message */
+    .error-message {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding: 1rem;
+        background-color: #fee2e2;
+        color: #991b1b;
+        border-radius: 8px;
+    }
+
+    .error-message i {
+        font-size: 1.25rem;
+    }
+
+    .error-message p {
+        margin: 0;
+        font-weight: 500;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .sale-container {
+            padding: 1rem;
+        }
+
+        .sale-header {
+            padding: 1.5rem;
+        }
+
+        .header-content h1 {
+            font-size: 1.75rem;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 </style>
 {% endblock %}

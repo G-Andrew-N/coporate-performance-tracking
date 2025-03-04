@@ -1,313 +1,818 @@
 {% extends 'main.html' %}
 
 {% block content %}
-    <div class="workspace-container">
-        <h1>Welcome, {{ request.user.get_full_name }} (Agent)</h1>
-        
-
-        <!-- Section 1: Tasks Assigned -->
-        <div class="tasks-section">
-            <h2>Your Tasks</h2>
-            <table class="tasks-table">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>To-do</th>
-                        <th>Priority</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for task in tasks %}
-                    <tr>
-                        <td>{{ task.predefined_task }}</td>
-                        <td>{{ task.description }}</td>
-                        <td>{{ task.priority }}</td>
-                        <td>{{ task.due_date }}</td>
-                        <td>{{ task.status }}</td>
-                        <td>
-                            <a href="{% url 'update_task_status' task.id %}" class="action-link">Update</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6">No tasks assigned.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="workspace-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="welcome-content">
+            <h1>Welcome, {{ user.get_full_name }}</h1>
+            <p class="subtitle">Manage your tasks and track your performance</p>
         </div>
-
-        <!-- Section 2: Available Properties -->
-        <div class="properties-section">
-            <h2>Available Properties</h2>
-            <table class="properties-table">
-                <thead>
-                    <tr>
-                        <th>Property Type</th>
-                        <th>Location</th>
-                        <th>Price</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for property in properties %}
-                    <tr>
-                        <td>{{ property.propertyType }}</td>
-                        <td>{{ property.location }}</td>
-                        <td>{{ property.price }}</td>
-                        <td>{{ property.status }}</td>
-                        <td>
-                            <a href="{% url 'make_sale' property.id %}" class="action-link">Sell</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5">No properties available.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Section 3: Performance Metrics -->
-        <div class="performance-section">
-            <h2>Your Performance</h2>
-            <ul class="performance-list">
-                <li><strong>Tasks Completed:</strong> {{ performance_metrics.tasks_completed }}</li>
-                <li><strong>Sales Closed:</strong> {{ performance_metrics.sales_closed }}</li>
-                <li><strong>Aggregate Points:</strong> {{ performance_metrics.aggregate_points }} pts</li>
-            </ul>
-        </div>
-
-        <!-- Section 4: Productivity Tracker -->
-        <div class="productivity-section">
-            <h2>Productivity</h2>
-            <table class="productivity-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Hours Worked</th>
-                        <th>Tasks Completed</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for productivity in productivity_data %}
-                    <tr>
-                        <td>{{ productivity.date }}</td>
-                        <td>{{ productivity.hours_worked }}</td>
-                        <td>{{ productivity.tasks_completed }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3">No productivity data available.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Section 5: Sales Made -->
-        <div class="sales-section">
-            <h2>Your Sales</h2>
-            <table class="sales-table">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Sale Price</th>
-                        <th>Sale Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for sale in sales %}
-                    <tr>
-                        <td>{{ sale.property_listing }}</td>
-                        <td>{{ sale.sale_price }}</td>
-                        <td>{{ sale.sale_date }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3">No sales made yet.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="quick-stats">
+            <div class="stat-card">
+                <i class="fas fa-tasks"></i>
+                <div class="stat-info">
+                    <span class="stat-value">{{ performance_metrics.tasks_completed }}</span>
+                    <span class="stat-label">Tasks Completed</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-handshake"></i>
+                <div class="stat-info">
+                    <span class="stat-value">{{ performance_metrics.sales_closed }}</span>
+                    <span class="stat-label">Sales Closed</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-star"></i>
+                <div class="stat-info">
+                    <span class="stat-value">{{ performance_metrics.aggregate_points }}</span>
+                    <span class="stat-label">Points Earned</span>
+                </div>
+            </div>
         </div>
     </div>
-    <style>
-        /* Main Container Styles */
-.workspace-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #2d3748;
-    background-color: #f7fafc;
-}
 
-/* Header Styles */
-h1 {
-    color: #1a365d;
-    font-size: 2rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-}
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Tasks Section -->
+        <div class="tasks-section">
+            <div class="section-header">
+                <h2>Your Tasks</h2>
+                <div class="task-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="overdue">Overdue</button>
+                    <button class="filter-btn" data-filter="pending">Pending</button>
+                    <button class="filter-btn" data-filter="completed">Completed</button>
+                </div>
+            </div>
+            
+            <!-- Overdue Tasks -->
+            {% if overdue_tasks %}
+            <div class="task-group overdue-group">
+                <h3 class="task-group-title overdue">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Overdue Tasks
+                </h3>
+                <div class="tasks-grid">
+                    {% for task in overdue_tasks %}
+                    <div class="task-card overdue">
+                        <div class="task-header">
+                            <h3>{{ task.predefined_task }}</h3>
+                            <span class="task-status overdue">Overdue</span>
+                        </div>
+                        <div class="task-details">
+                            <div class="detail-row">
+                                <span class="label">Description:</span>
+                                <span class="value">{{ task.description }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Priority:</span>
+                                <span class="value priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Due Date:</span>
+                                <span class="value">{{ task.due_date|date:"F d, Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <a href="{% url 'update_task_status' task.id %}" class="action-link">
+                                <i class="fas fa-check"></i>
+                                Update Status
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
-h2 {
-    color: #2c5282;
-    font-size: 1.5rem;
-    font-weight: 500;
-    margin: 2rem 0 1rem;
-}
+            <!-- Pending Tasks -->
+            {% if pending_tasks %}
+            <div class="task-group pending-group">
+                <h3 class="task-group-title pending">
+                    <i class="fas fa-clock"></i>
+                    Pending Tasks
+                </h3>
+                <div class="tasks-grid">
+                    {% for task in pending_tasks %}
+                    <div class="task-card pending">
+                        <div class="task-header">
+                            <h3>{{ task.predefined_task }}</h3>
+                            <span class="task-status pending">Pending</span>
+                        </div>
+                        <div class="task-details">
+                            <div class="detail-row">
+                                <span class="label">Description:</span>
+                                <span class="value">{{ task.description }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Priority:</span>
+                                <span class="value priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Due Date:</span>
+                                <span class="value">{{ task.due_date|date:"F d, Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <a href="{% url 'update_task_status' task.id %}" class="action-link">
+                                <i class="fas fa-check"></i>
+                                Update Status
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
-/* Profile Link */
-.profile-link {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    background-color: #4299e1;
-    color: white;
-    text-decoration: none;
-    border-radius: 0.375rem;
-    transition: background-color 0.2s;
-}
+            <!-- Completed Tasks -->
+            {% if completed_tasks %}
+            <div class="task-group completed-group">
+                <h3 class="task-group-title completed">
+                    <i class="fas fa-check-circle"></i>
+                    Completed Tasks
+                </h3>
+                <div class="tasks-grid">
+                    {% for task in completed_tasks %}
+                    <div class="task-card completed">
+                        <div class="task-header">
+                            <h3>{{ task.predefined_task }}</h3>
+                            <span class="task-status completed">Completed</span>
+                        </div>
+                        <div class="task-details">
+                            <div class="detail-row">
+                                <span class="label">Description:</span>
+                                <span class="value">{{ task.description }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Priority:</span>
+                                <span class="value priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Due Date:</span>
+                                <span class="value">{{ task.due_date|date:"F d, Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <a href="{% url 'update_task_status' task.id %}" class="action-link review">
+                                <i class="fas fa-eye"></i>
+                                Review
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
-.profile-link:hover {
-    background-color: #2b6cb0;
-}
+            {% if not overdue_tasks and not pending_tasks and not completed_tasks %}
+            <div class="no-tasks">
+                <i class="fas fa-inbox"></i>
+                <p>No tasks assigned.</p>
+            </div>
+            {% endif %}
+        </div>
 
-/* Section Styles */
-.tasks-section,
-.properties-section,
-.performance-section,
-.productivity-section,
-.sales-section {
-    background: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
+        <!-- Properties Section -->
+        <div class="properties-section" id="properties-section">
+            <div class="section-header">
+                <h2>Available Properties</h2>
+                <div class="search-filter">
+                    <div class="filter-group">
+                        <div class="filter-input-wrapper">
+                            <i class="fas fa-building"></i>
+                            <input type="text" id="propertyTypeFilter" placeholder="Filter by property type..." class="filter-input">
+                        </div>
+                        <div class="filter-input-wrapper">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <input type="text" id="locationFilter" placeholder="Filter by location..." class="filter-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-/* Table Styles */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1rem 0;
-    background-color: white;
-}
+            <div class="table-container">
+                <table class="properties-table" id="propertiesTable">
+                    <thead>
+                        <tr>
+                            <th>Property Type</th>
+                            <th>Location</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for property in properties %}
+                        <tr class="property-row" data-type="{{ property.propertyType|lower }}" data-location="{{ property.location|lower }}">
+                            <td>{{ property.propertyType }}</td>
+                            <td>{{ property.location }}</td>
+                            <td>₹{{ property.price|floatformat:2 }}</td>
+                            <td>
+                                <span class="status-badge {{ property.status|lower }}">{{ property.status }}</span>
+                            </td>
+                            <td>
+                                <a href="{% url 'make_sale' property.id %}" class="action-link">
+                                    <i class="fas fa-handshake"></i>
+                                    Sell
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="no-data">
+                                <i class="fas fa-building"></i>
+                                <p>No properties available.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-th {
-    background-color: #edf2f7;
-    color: #4a5568;
-    font-weight: 600;
-    text-align: left;
-    padding: 1rem;
-    border-bottom: 2px solid #e2e8f0;
-}
+            <!-- Pagination Controls -->
+            {% if properties.has_other_pages %}
+            <div class="pagination-controls">
+                {% if properties.has_previous %}
+                <a href="?page={{ properties.previous_page_number }}" class="pagination-link" onclick="return saveScrollPosition()">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+                {% endif %}
 
-td {
-    padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    color: #4a5568;
-}
+                <span class="page-info">
+                    Page {{ properties.number }} of {{ properties.paginator.num_pages }}
+                </span>
 
-tr:hover {
-    background-color: #f7fafc;
-}
+                {% if properties.has_next %}
+                <a href="?page={{ properties.next_page_number }}" class="pagination-link" onclick="return saveScrollPosition()">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
-/* Action Links */
-.action-link {
-    display: inline-block;
-    padding: 0.375rem 0.75rem;
-    background-color: #4299e1;
-    color: white;
-    text-decoration: none;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    transition: background-color 0.2s;
-}
-
-.action-link:hover {
-    background-color: #2b6cb0;
-}
-
-/* Performance List */
-.performance-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.performance-list li {
-    padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.performance-list li:last-child {
-    border-bottom: none;
-}
-
-.performance-list strong {
-    color: #2d3748;
-    font-weight: 600;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
+<style>
     .workspace-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        background-color: #f8f9fa;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        margin-bottom: 2rem;
+    }
+
+    .welcome-content {
+        margin-bottom: 1.5rem;
+    }
+
+    .welcome-content h1 {
+        font-size: 2rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-card i {
+        font-size: 2rem;
+        color: #3b82f6;
+        background: #eff6ff;
         padding: 1rem;
+        border-radius: 12px;
     }
 
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-    th, td {
-        padding: 0.75rem;
-    }
-
-    .performance-list li {
+    .stat-info {
+        display: flex;
         flex-direction: column;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    /* Content Grid */
+    .content-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    /* Tasks Section */
+    .tasks-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Section Headers */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.5rem;
+    }
+
+    /* Task Filters */
+    .task-filters {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+
+    /* Task Groups */
+    .task-group {
+        margin-bottom: 2rem;
+    }
+
+    .task-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .task-group-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .task-group-title i {
+        font-size: 1.2rem;
+    }
+
+    .task-group-title.overdue {
+        color: #991b1b;
+        border-bottom-color: #fee2e2;
+    }
+
+    .task-group-title.pending {
+        color: #92400e;
+        border-bottom-color: #fef3c7;
+    }
+
+    .task-group-title.completed {
+        color: #166534;
+        border-bottom-color: #dcfce7;
+    }
+
+    /* Task Cards */
+    .tasks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .task-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-left: 4px solid transparent;
+    }
+
+    .task-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .task-card.overdue { border-left-color: #ef4444; }
+    .task-card.pending { border-left-color: #f59e0b; }
+    .task-card.completed { border-left-color: #10b981; }
+
+    .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .task-header h3 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .task-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .task-status.overdue {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .task-status.pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .task-status.completed {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .task-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
         align-items: flex-start;
     }
-}
 
-/* Empty State Styles */
-tr:empty {
-    text-align: center;
-    color: #718096;
-    font-style: italic;
-}
+    .label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
 
-/* Status Colors */
-.status-pending {
-    color: #d69e2e;
-}
+    .value {
+        color: #2c3e50;
+        font-weight: 500;
+    }
 
-.status-completed {
-    color: #38a169;
-}
+    .priority-high { color: #dc2626; }
+    .priority-medium { color: #d97706; }
+    .priority-low { color: #059669; }
 
-.status-overdue {
-    color: #e53e3e;
-}
+    .task-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
 
-/* Animations */
-.action-link, .profile-link {
-    transition: all 0.2s ease-in-out;
-}
+    .action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: #3b82f6;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
 
-.action-link:active, .profile-link:active {
-    transform: scale(0.95);
-}
-    </style>
-   
+    .action-link:hover {
+        background-color: #2563eb;
+    }
+
+    .action-link.review {
+        background-color: #10b981;
+    }
+
+    .action-link.review:hover {
+        background-color: #059669;
+    }
+
+    /* Properties Section */
+    .properties-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .search-filter {
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .filter-input-wrapper {
+        flex: 1;
+        position: relative;
+    }
+
+    .filter-input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #2c3e50;
+        transition: border-color 0.2s;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .properties-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .properties-table th,
+    .properties-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .properties-table th {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .properties-table tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-badge.available {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-badge.sold {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-badge.under-contract {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    /* Pagination */
+    .pagination-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .pagination-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: #3b82f6;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
+
+    .pagination-link:hover {
+        background-color: #2563eb;
+    }
+
+    .page-info {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    /* Empty States */
+    .no-tasks, .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+
+    .no-tasks i, .no-data i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #9ca3af;
+    }
+
+    .no-tasks p, .no-data p {
+        margin: 0;
+        font-style: italic;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .workspace-container {
+            padding: 1rem;
+        }
+
+        .welcome-content h1 {
+            font-size: 1.75rem;
+        }
+
+        .quick-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .section-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .task-filters {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .filter-group {
+            flex-direction: column;
+        }
+
+        .tasks-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    // Task filtering functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const taskGroups = document.querySelectorAll('.task-group');
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                const filter = button.dataset.filter;
+
+                // Show/hide task groups based on filter
+                taskGroups.forEach(group => {
+                    if (filter === 'all' || group.classList.contains(`${filter}-group`)) {
+                        group.style.display = 'block';
+                    } else {
+                        group.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+
+    // Property filtering functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const propertyTypeFilter = document.getElementById('propertyTypeFilter');
+        const locationFilter = document.getElementById('locationFilter');
+        const propertyRows = document.querySelectorAll('.property-row');
+
+        function filterProperties() {
+            const typeValue = propertyTypeFilter.value.toLowerCase();
+            const locationValue = locationFilter.value.toLowerCase();
+
+            propertyRows.forEach(row => {
+                const propertyType = row.dataset.type;
+                const propertyLocation = row.dataset.location;
+                
+                const typeMatch = propertyType.includes(typeValue);
+                const locationMatch = propertyLocation.includes(locationValue);
+                
+                if (typeMatch && locationMatch) {
+                    row.classList.remove('hidden-row');
+                } else {
+                    row.classList.add('hidden-row');
+                }
+            });
+
+            // Show "No results" message if all rows are hidden
+            const visibleRows = document.querySelectorAll('.property-row:not(.hidden-row)');
+            const noResultsRow = document.querySelector('.properties-table tbody tr:not(.property-row)');
+            
+            if (visibleRows.length === 0) {
+                if (!noResultsRow) {
+                    const tbody = document.querySelector('.properties-table tbody');
+                    tbody.innerHTML = '<tr><td colspan="5" class="no-data"><i class="fas fa-building"></i><p>No properties match your search criteria.</p></td></tr>';
+                }
+            } else if (noResultsRow) {
+                const tbody = document.querySelector('.properties-table tbody');
+                tbody.innerHTML = '';
+                visibleRows.forEach(row => tbody.appendChild(row));
+            }
+        }
+
+        propertyTypeFilter.addEventListener('input', filterProperties);
+        locationFilter.addEventListener('input', filterProperties);
+    });
+
+    // Scroll position management
+    function saveScrollPosition() {
+        const propertiesSection = document.getElementById('properties-section');
+        if (propertiesSection) {
+            const scrollPosition = propertiesSection.getBoundingClientRect().top + window.pageYOffset;
+            sessionStorage.setItem('scrollPosition', scrollPosition);
+        }
+        return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const scrollPosition = sessionStorage.getItem('scrollPosition');
+        if (scrollPosition) {
+            window.scrollTo(0, parseInt(scrollPosition));
+            sessionStorage.removeItem('scrollPosition');
+        }
+    });
+</script>
 {% endblock %}
