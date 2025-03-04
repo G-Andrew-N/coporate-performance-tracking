@@ -170,10 +170,12 @@ class Task(models.Model):
         return f"{self.predefined_task.title} ({self.status})"
 
     def save(self, *args, **kwargs):
-        """Ensure priority and description are updated from predefined task."""
+        """Ensure priority is updated from predefined task but preserve custom description."""
         if self.predefined_task:
             self.priority = self.predefined_task.priority
-            self.description = self.predefined_task.description
+            # Only set description from predefined task if no custom description is provided
+            if not self.description:
+                self.description = self.predefined_task.description
         super(Task, self).save(*args, **kwargs)
 
 

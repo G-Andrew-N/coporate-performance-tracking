@@ -322,52 +322,35 @@ def user_profile_view(request):
 # Assign Task View
 @login_required
 def assign_task(request):
-    # Fetch predefined tasks, agents, and assigned tasks
-    
-    predefined_tasks = PredefinedTask.objects.all()
-    agents = Employee.objects.filter(role='Agent')
-    assigned_tasks = Task.objects.filter(assigned_to__isnull=False)
-
     if request.method == 'POST':
         predefined_task_id = request.POST.get('predefined_task_id')
         employee_id = request.POST.get('employee_id')
-        due_date_str = request.POST.get('due_date')
+        due_date = request.POST.get('due_date')
+        description = request.POST.get('description')  # Get the custom description
 
         try:
-            # Validate predefined task and employee
             predefined_task = PredefinedTask.objects.get(id=predefined_task_id)
             employee = Employee.objects.get(id=employee_id)
-
-            # Check if the employee is an agent
-            if employee.role != 'Agent':
-                messages.error(request, 'Selected user is not an agent.')
-                return redirect(reverse('assign_task'))  # Use URL name
-
-            # Validate due date
-            due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
-            if due_date < datetime.now().date():
-                messages.error(request, 'Due date cannot be in the past.')
-                return redirect(reverse('assign_task'))  # Use URL name
-
-            # Create a new Task instance
-            Task.objects.create(
+            
+            # Create task with custom description
+            task = Task.objects.create(
                 predefined_task=predefined_task,
                 assigned_to=employee,
-              
-                description=predefined_task.description,
-                priority=predefined_task.priority,
+                description=description,  # Use the custom description
                 due_date=due_date,
                 status='Pending'
             )
-            messages.success(request, f'Task "{predefined_task.title}" assigned to {employee.user.get_full_name()}.')
-            return redirect(reverse('assign_task'))  # Use URL name
+            
+            messages.success(request, 'Task assigned successfully!')
+            return redirect('assign_task')
+        except Exception as e:
+            messages.error(request, f'Error assigning task: {str(e)}')
+            return redirect('assign_task')
 
-        except PredefinedTask.DoesNotExist:
-            messages.error(request, 'Invalid task selected.')
-        except Employee.DoesNotExist:
-            messages.error(request, 'Invalid employee selected.')
-        except ValueError:
-            messages.error(request, 'Invalid due date format.')
+    # Fetch predefined tasks, agents, and assigned tasks
+    predefined_tasks = PredefinedTask.objects.all()
+    agents = Employee.objects.filter(role='Agent')
+    assigned_tasks = Task.objects.filter(assigned_to__isnull=False)
 
     # Render the template with context data
     return render(request, 'base/assign_task.html', {
@@ -575,7 +558,8 @@ def task_performance(request):
     except Employee.DoesNotExist:
         return JsonResponse({'error': 'No employee profile found for the user.'}, status=404)
 
-    tasks = Task.objects.filter(assigned_to=employee)
+    # Fetch tasks with their descriptions
+    tasks = Task.objects.filter(assigned_to=employee).select_related('predefined_task')
     total_tasks = tasks.count()
     completed_tasks = tasks.filter(status='Completed').count()
     completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0

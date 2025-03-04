@@ -54,6 +54,11 @@
                     <input type="date" name="due_date" id="due_date" required>
                 </div>
 
+                <div class="form-group">
+                    <label for="description">Task Description</label>
+                    <textarea name="description" id="description" rows="4" placeholder="Enter specific details about this task..." required></textarea>
+                </div>
+
                 <button type="submit" class="submit-button">
                     <i class="fas fa-check"></i>
                     Assign Task
@@ -245,6 +250,24 @@
 
     .form-group select:focus,
     .form-group input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group textarea {
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #2c3e50;
+        background-color: #f8f9fa;
+        transition: border-color 0.2s;
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-group textarea:focus {
         outline: none;
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
