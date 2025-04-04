@@ -122,7 +122,7 @@
                             {% for sale in recent_sales %}
                             <tr>
                                 <td>{{ sale.property_listing }}</td>
-                                <td>₹{{ sale.sale_price|floatformat:2 }}</td>
+                                <td>ksh{{ sale.sale_price|floatformat:2 }}</td>
                                 <td>{{ sale.sale_date|date:"M d, Y" }}</td>
                             </tr>
                             {% empty %}
