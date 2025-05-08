@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+ALLOWED_HOSTS = ['performanceTracker.herokuapp.com']
+
 
 LOGIN_URL = 'login'  # Name of the login URL pattern
 
@@ -144,3 +147,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # For development/testing, you can use the console backend instead:
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+import dj_database_url
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+
+# Whitenoise config
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+# Database config for Heroku
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
