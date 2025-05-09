@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'fallback-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['base.onrender.com', '4.1prj-5.onrender.com']
+ALLOWED_HOSTS = ['base.onrender.com', '4.1prj-5.onrender.com', 'base-1kn8.onrender.com']
 
 
 # Application definition
