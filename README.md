@@ -1,6 +1,6 @@
 # RETS real estate performance tracker
-hosted on render 
-link: https://base-1kn8.onrender.com/
+- hosted on render 
+- link: https://base-1kn8.onrender.com/
 
 A comprehensive performance tracking and analytics application built with Django.
 ## Features
@@ -17,7 +17,7 @@ A comprehensive performance tracking and analytics application built with Django
 
 ### Backend
 - Django 5.1.6
-- PostgreSQL (via psycopg2-binary)
+- sqlite
 - Gunicorn
 - WhiteNoise for static files
 - Social Auth for authentication
