@@ -98,4 +98,4 @@ A comprehensive performance tracking and analytics application built with Django
 
 ## Contact
 
-andrewgathuto7@gmail.com
+ngureandrew7@gmail.com
