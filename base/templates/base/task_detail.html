@@ -1,0 +1,15 @@
+{% extends 'main.html' %}
+
+{% block content %}
+    <section class="task-details">
+        <h1>Task Details</h1>
+        <div class="task-info">
+            <p><strong>Title:</strong> {{ task.title }}</p>
+            <p><strong>Description:</strong> {{ task.description }}</p>
+            <p><strong>Priority:</strong> <span class="priority">{{ task.priority }}</span></p>
+            <p><strong>Due Date:</strong> {{ task.due_date }}</p>
+            <p><strong>Status:</strong> <span class="status">{{ task.status }}</span></p>
+        </div>
+        <a href="{% url 'agent_workpage' %}" class="btn">Back to Workpage</a>
+    </section>
+{% endblock %}

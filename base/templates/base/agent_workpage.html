@@ -1,0 +1,522 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="workspace-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="welcome-content">
+            <h1>Welcome, {{ user.get_full_name }}</h1>
+            
+        </div>
+        <div class="quick-stats">
+            <div class="stat-card">
+                <i class="fas fa-handshake"></i>
+                <div class="stat-info">
+                    <span class="stat-value">{{ total_sales }}</span>
+                    <span class="stat-label">Total Sales</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-dollar-sign"></i>
+                <div class="stat-info">
+                    <span class="stat-value">₹{{ total_revenue|floatformat:2 }}</span>
+                    <span class="stat-label">Total Revenue</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-chart-line"></i>
+                <div class="stat-info">
+                    <span class="stat-value">₹{{ average_sale_price|floatformat:2 }}</span>
+                    <span class="stat-label">Avg. Sale Price</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Properties Grid Section -->
+    <div class="properties-section">
+        <div class="section-header">
+            <h2>Available Properties</h2>
+            <div class="search-filter">
+                <div class="filter-group">
+                    <div class="filter-input-wrapper">
+                        <i class="fas fa-building"></i>
+                        <input type="text" id="propertyTypeFilter" placeholder="Filter by property type..." class="filter-input">
+                    </div>
+                    <div class="filter-input-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" id="locationFilter" placeholder="Filter by location..." class="filter-input">
+                    </div>
+                    <div class="filter-input-wrapper">
+                        <i class="fas fa-sliders-h"></i>
+                        <select id="priceRangeFilter" class="filter-input">
+                            <option value="">Price Range</option>
+                            <option value="0-1000000">Under ₹10L</option>
+                            <option value="1000000-5000000">₹10L - ₹50L</option>
+                            <option value="5000000-10000000">₹50L - ₹1Cr</option>
+                            <option value="10000000+">Over ₹1Cr</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="properties-grid">
+            {% for property in properties %}
+            <div class="property-card" data-type="{{ property.propertyType|lower }}" data-location="{{ property.location|lower }}">
+                <div class="property-image">
+                    {% if property.image %}
+                        <img src="{{ property.image.url }}" alt="{{ property.propertyType }}">
+                    {% else %}
+                        <div class="placeholder-image">
+                            <i class="fas fa-home"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="property-content">
+                    <div class="property-header">
+                        <h3>{{ property.propertyType }}</h3>
+                        <span class="price">₹{{ property.price|floatformat:2 }}</span>
+                    </div>
+                    <div class="property-details">
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ property.location }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-ruler-combined"></i>
+                            <span>{{ property.coveredArea }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-building"></i>
+                            <span>{{ property.floors }} Floors</span>
+                        </div>
+                    </div>
+                    <div class="property-actions">
+                        <a href="{% url 'make_sale' property.id %}" class="action-button">
+                            <i class="fas fa-handshake"></i>
+                            Make Sale
+                        </a>
+                        <a href="{% url 'property_detail' property.id %}" class="action-button secondary">
+                            <i class="fas fa-info-circle"></i>
+                            Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="no-properties">
+                <i class="fas fa-building"></i>
+                <p>No properties available at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if properties.has_other_pages %}
+        <div class="pagination-controls">
+            {% if properties.has_previous %}
+            <a href="?page={{ properties.previous_page_number }}" class="pagination-link">
+                <i class="fas fa-chevron-left"></i> Previous
+            </a>
+            {% endif %}
+
+            <span class="page-info">
+                Page {{ properties.number }} of {{ properties.paginator.num_pages }}
+            </span>
+
+            {% if properties.has_next %}
+            <a href="?page={{ properties.next_page_number }}" class="pagination-link">
+                Next <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .workspace-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        background-color: #f8f9fa;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        margin-bottom: 2rem;
+    }
+
+    .welcome-content {
+        margin-bottom: 1.5rem;
+    }
+
+    .welcome-content h1 {
+        font-size: 2rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-card i {
+        font-size: 2rem;
+        color: #3b82f6;
+        background: #eff6ff;
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    /* Properties Section */
+    .properties-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .section-header {
+        margin-bottom: 2rem;
+    }
+
+    .section-header h2 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .search-filter {
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-input-wrapper {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+    }
+
+    .filter-input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #2c3e50;
+        transition: border-color 0.2s;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Properties Grid */
+    .properties-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .property-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .property-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .property-image {
+        height: 200px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .property-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .placeholder-image {
+        color: #9ca3af;
+        font-size: 3rem;
+    }
+
+    .property-content {
+        padding: 1.5rem;
+    }
+
+    .property-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .property-header h3 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+
+    .price {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #3b82f6;
+    }
+
+    .property-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+    }
+
+    .detail-item i {
+        width: 20px;
+        color: #9ca3af;
+    }
+
+    .property-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .action-button {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background-color 0.2s;
+    }
+
+    .action-button:first-child {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .action-button:first-child:hover {
+        background-color: #2563eb;
+    }
+
+    .action-button.secondary {
+        background-color: #f3f4f6;
+        color: #4b5563;
+    }
+
+    .action-button.secondary:hover {
+        background-color: #e5e7eb;
+    }
+
+    .no-properties {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .no-properties i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #9ca3af;
+    }
+
+    .no-properties p {
+        margin: 0;
+        font-style: italic;
+    }
+
+    /* Pagination */
+    .pagination-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .pagination-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: #3b82f6;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
+
+    .pagination-link:hover {
+        background-color: #2563eb;
+    }
+
+    .page-info {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .workspace-container {
+            padding: 1rem;
+        }
+
+        .welcome-content h1 {
+            font-size: 1.75rem;
+        }
+
+        .quick-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-group {
+            flex-direction: column;
+        }
+
+        .properties-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const propertyTypeFilter = document.getElementById('propertyTypeFilter');
+        const locationFilter = document.getElementById('locationFilter');
+        const priceRangeFilter = document.getElementById('priceRangeFilter');
+        const propertyCards = document.querySelectorAll('.property-card');
+
+        function filterProperties() {
+            const typeValue = propertyTypeFilter.value.toLowerCase();
+            const locationValue = locationFilter.value.toLowerCase();
+            const priceValue = priceRangeFilter.value;
+
+            propertyCards.forEach(card => {
+                const propertyType = card.dataset.type;
+                const propertyLocation = card.dataset.location;
+                const propertyPrice = parseFloat(card.querySelector('.price').textContent.replace(/[^0-9.-]+/g, ''));
+                
+                const typeMatch = propertyType.includes(typeValue);
+                const locationMatch = propertyLocation.includes(locationValue);
+                let priceMatch = true;
+
+                if (priceValue) {
+                    const [min, max] = priceValue.split('-').map(Number);
+                    if (max) {
+                        priceMatch = propertyPrice >= min && propertyPrice <= max;
+                    } else {
+                        priceMatch = propertyPrice >= min;
+                    }
+                }
+                
+                if (typeMatch && locationMatch && priceMatch) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show "No results" message if all cards are hidden
+            const visibleCards = document.querySelectorAll('.property-card[style="display: block;"]');
+            const noProperties = document.querySelector('.no-properties');
+            
+            if (visibleCards.length === 0) {
+                if (!noProperties) {
+                    const grid = document.querySelector('.properties-grid');
+                    grid.innerHTML = '<div class="no-properties"><i class="fas fa-building"></i><p>No properties match your search criteria.</p></div>';
+                }
+            } else if (noProperties) {
+                const grid = document.querySelector('.properties-grid');
+                grid.innerHTML = '';
+                visibleCards.forEach(card => grid.appendChild(card));
+            }
+        }
+
+        propertyTypeFilter.addEventListener('input', filterProperties);
+        locationFilter.addEventListener('input', filterProperties);
+        priceRangeFilter.addEventListener('change', filterProperties);
+    });
+</script>
+{% endblock %}

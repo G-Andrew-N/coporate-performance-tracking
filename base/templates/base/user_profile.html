@@ -1,0 +1,532 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-info">
+            <h1>{{ user.get_full_name }}</h1>
+            <div class="role-badge">{{ employee.role }}</div>
+        </div>
+        <div class="profile-stats">
+            <div class="stat-card">
+                <i class="fas fa-star"></i>
+                <div class="stat-info">
+                    <span class="stat-value">{{ performance_metrics.aggregate_points|default:"0" }}</span>
+                    <span class="stat-label">Performance Score</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-calendar-alt"></i>
+                <div class="stat-info">
+                    <span class="stat-value">{{ employee.join_date|date:"F Y" }}</span>
+                    <span class="stat-label">Member Since</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="performance-section">
+        <div class="section-header">
+            <h2><i class="fas fa-chart-line"></i> Performance Summary</h2>
+        </div>
+        <div class="performance-grid">
+            <div class="performance-card">
+                <i class="fas fa-tasks"></i>
+                <div class="performance-info">
+                    <span class="performance-value">{{ performance_metrics.tasks_completed|default:"0" }}</span>
+                    <span class="performance-label">Tasks Completed</span>
+                </div>
+            </div>
+            <div class="performance-card">
+                <i class="fas fa-handshake"></i>
+                <div class="performance-info">
+                    <span class="performance-value">{{ performance_metrics.sales_closed|default:"0" }}</span>
+                    <span class="performance-label">Sales Closed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <div class="chart-container">
+            <div class="section-header">
+                <h2><i class="fas fa-pie-chart"></i> Task Status Overview</h2>
+            </div>
+            <canvas id="taskStatusChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> Profit Trends</h2>
+            </div>
+            <canvas id="profitTrendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Sales -->
+    <div class="sales-section">
+        <div class="section-header">
+            <h2><i class="fas fa-home"></i> Recent Sales</h2>
+        </div>
+        {% if sales %}
+            <div class="sales-grid">
+                {% for sale in sales %}
+                    <div class="sale-card">
+                        <div class="sale-header">
+                            <div class="property-type">
+                                <i class="fas fa-building"></i>
+                                {{ sale.property_listing.propertyType }}
+                            </div>
+                            <span class="sale-date">{{ sale.sale_date|date:"F d, Y" }}</span>
+                        </div>
+                        <div class="sale-details">
+                            <div class="detail-row">
+                                <span class="label">Location:</span>
+                                <span class="value">{{ sale.property_listing.location }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Address:</span>
+                                <span class="value">{{ sale.property_listing.address }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Buyer:</span>
+                                <span class="value">{{ sale.buyer_name }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Sale Price:</span>
+                                <span class="value price">₹{{ sale.sale_price|floatformat:2 }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Payment Method:</span>
+                                <span class="value">{{ sale.payment_method }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Closing Date:</span>
+                                <span class="value">{{ sale.closing_date|date:"F d, Y"|default:"Not set" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-home"></i>
+                <p>No recent sales.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: #f8f9fa;
+    }
+
+    /* Profile Header */
+    .profile-header {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .profile-info {
+        margin-bottom: 1.5rem;
+    }
+
+    .profile-info h1 {
+        font-size: 2.5rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: #e2e8f0;
+        color: #4a5568;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-card i {
+        font-size: 1.5rem;
+        color: #3b82f6;
+        background: #eff6ff;
+        padding: 0.75rem;
+        border-radius: 8px;
+    }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    /* Section Headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.5rem;
+    }
+
+    .section-header i {
+        color: #3b82f6;
+    }
+
+    /* Performance Section */
+    .performance-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .performance-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .performance-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+
+    .performance-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .performance-card i {
+        font-size: 2rem;
+        color: #3b82f6;
+        background: #eff6ff;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .performance-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .performance-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .performance-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    /* Charts Section */
+    .charts-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    canvas {
+        width: 100% !important;
+        height: 300px !important;
+    }
+
+    /* Sales Section */
+    .sales-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .sales-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .sale-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: transform 0.2s;
+    }
+
+    .sale-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .sale-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .property-type {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .property-type i {
+        color: #3b82f6;
+    }
+
+    .sale-date {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .sale-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .label {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .value {
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .value.price {
+        color: #3b82f6;
+        font-weight: 600;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #9ca3af;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .profile-container {
+            padding: 1rem;
+        }
+
+        .profile-info h1 {
+            font-size: 2rem;
+        }
+
+        .profile-stats,
+        .performance-grid,
+        .charts-section {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-container {
+            padding: 1rem;
+        }
+
+        canvas {
+            height: 250px !important;
+        }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Task Status Pie Chart
+        let taskStatusCtx = document.getElementById("taskStatusChart").getContext("2d");
+        let taskStatusData = {{ task_status_counts|default:"[]"|safe }};
+
+        if (taskStatusData.length > 0) {
+            new Chart(taskStatusCtx, {
+                type: "pie",
+                data: {
+                    labels: ["Pending", "Completed", "Overdue"],
+                    datasets: [{
+                        data: taskStatusData,
+                        backgroundColor: ["#f59e0b", "#10b981", "#ef4444"],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { 
+                            position: "bottom",
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: "rgba(0, 0, 0, 0.8)",
+                            padding: 12,
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Agent Profit Trend Chart
+        let profitCtx = document.getElementById("profitTrendChart").getContext("2d");
+        let profitLabels = {{ profit_data.labels|default:"[]"|safe }};
+        let profitValues = {{ profit_data.profit_values|default:"[]"|safe }};
+
+        if (profitLabels.length > 0 && profitValues.length > 0) {
+            new Chart(profitCtx, {
+                type: "line",
+                data: {
+                    labels: profitLabels,
+                    datasets: [{
+                        label: "Profit Amount (₹)",
+                        data: profitValues,
+                        borderColor: "#3b82f6",
+                        backgroundColor: "rgba(59, 130, 246, 0.1)",
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: "#3b82f6",
+                        pointBorderColor: "#fff",
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.05)"
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return "₹" + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            backgroundColor: "rgba(0, 0, 0, 0.8)",
+                            padding: 12,
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return "₹" + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

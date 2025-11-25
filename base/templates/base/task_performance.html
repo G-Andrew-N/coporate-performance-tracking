@@ -1,0 +1,340 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="task-performance-container">
+    <!-- Performance Overview Card -->
+    <div class="performance-overview">
+        <h2><span class="emoji">📊</span> Performance Overview</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-value">{{ performance.total_tasks }}</div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value">{{ performance.completed_tasks }}</div>
+                <div class="stat-label">Completed Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-value">{{ performance.completion_rate }}%</div>
+                <div class="stat-label">Completion Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Lists -->
+    <div class="task-lists-container">
+        <!-- Pending Tasks -->
+        <div class="task-section">
+            <h3><span class="emoji">⏳</span> Pending Tasks</h3>
+            {% with pending_tasks=tasks %}
+                {% if pending_tasks %}
+                    <div class="task-grid">
+                        {% for task in pending_tasks %}
+                            {% if task.status == 'Pending' %}
+                                <div class="task-card pending">
+                                    <div class="task-header">
+                                        <h4>Task Details</h4>
+                                        <span class="priority-badge {{ task.priority.lower }}">{{ task.priority }}</span>
+                                    </div>
+                                    <p class="task-description">{{ task.description }}</p>
+                                    <div class="task-footer">
+                                        <span class="due-date">Due: {{ task.due_date|date:"M d, Y" }}</span>
+                                        <a href="{% url 'update_task_status' task.id %}" class="action-button">Update Status</a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-tasks">No pending tasks</p>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Overdue Tasks -->
+        <div class="task-section">
+            <h3><span class="emoji">⚠️</span> Overdue Tasks</h3>
+            {% with overdue_tasks=tasks %}
+                {% if overdue_tasks %}
+                    <div class="task-grid">
+                        {% for task in overdue_tasks %}
+                            {% if task.status == 'Overdue' %}
+                                <div class="task-card overdue">
+                                    <div class="task-header">
+                                        <h4>Task Details</h4>
+                                        <span class="priority-badge {{ task.priority.lower }}">{{ task.priority }}</span>
+                                    </div>
+                                    <p class="task-description">{{ task.description }}</p>
+                                    <div class="task-footer">
+                                        <span class="due-date overdue">Due: {{ task.due_date|date:"M d, Y" }}</span>
+                                        <a href="{% url 'update_task_status' task.id %}" class="action-button">Update Status</a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-tasks">No overdue tasks</p>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="task-section">
+            <h3><span class="emoji">✅</span> Completed Tasks</h3>
+            {% with completed_tasks=tasks %}
+                {% if completed_tasks %}
+                    <div class="task-grid">
+                        {% for task in completed_tasks %}
+                            {% if task.status == 'Completed' %}
+                                <div class="task-card completed">
+                                    <div class="task-header">
+                                        <h4>Task Details</h4>
+                                        <span class="priority-badge {{ task.priority.lower }}">{{ task.priority }}</span>
+                                    </div>
+                                    <p class="task-description">{{ task.description }}</p>
+                                    <div class="task-footer">
+                                        <span class="completion-date">Completed: {{ task.due_date|date:"M d, Y" }}</span>
+                                        {% if task.document and task.document.url %}
+                                            <a href="{{ task.document.url }}" class="action-button" target="_blank" onclick="return checkDocumentExists(event, this.href)">View Document</a>
+                                        {% else %}
+                                            <span class="no-document">No document available</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-tasks">No completed tasks</p>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .task-performance-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .performance-overview {
+        background: #1a1a1a;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .performance-overview h2 {
+        color: #fff;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        background: #2a2a2a;
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #aaa;
+        font-size: 0.9rem;
+    }
+
+    .task-lists-container {
+        display: grid;
+        gap: 2rem;
+    }
+
+    .task-section {
+        background: #1a1a1a;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .task-section h3 {
+        color: #fff;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .task-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .task-card {
+        background: #2a2a2a;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: transform 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .task-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .task-header h4 {
+        color: #fff;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .priority-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .priority-badge.high {
+        background: #ff4444;
+        color: white;
+    }
+
+    .priority-badge.medium {
+        background: #ffbb33;
+        color: white;
+    }
+
+    .priority-badge.low {
+        background: #00C851;
+        color: white;
+    }
+
+    .task-description {
+        color: #ddd;
+        font-size: 1rem;
+        line-height: 1.5;
+        background: #333;
+        padding: 1rem;
+        border-radius: 6px;
+        margin: 0.5rem 0;
+        white-space: pre-wrap;
+    }
+
+    .task-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        margin-top: auto;
+    }
+
+    .due-date {
+        color: #aaa;
+    }
+
+    .due-date.overdue {
+        color: #ff4444;
+    }
+
+    .completion-date {
+        color: #00C851;
+    }
+
+    .action-button {
+        background: #3a3a3a;
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: background 0.3s ease;
+    }
+
+    .action-button:hover {
+        background: #4a4a4a;
+    }
+
+    .no-tasks {
+        color: #aaa;
+        text-align: center;
+        padding: 2rem;
+        font-style: italic;
+    }
+
+    .no-document {
+        color: #aaa;
+        font-size: 0.8rem;
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .task-performance-container {
+            padding: 1rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .task-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    function checkDocumentExists(event, url) {
+        event.preventDefault();
+        fetch(url, { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    window.open(url, '_blank');
+                } else {
+                    alert('Document is not available at the moment. Please try again later.');
+                }
+            })
+            .catch(() => {
+                alert('Document is not available at the moment. Please try again later.');
+            });
+    }
+</script>
+{% endblock %} 

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sale Summary - Property Price Predictor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .success-message {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+            animation: slideUp 0.5s ease;
+        }
+
+        .success-message i {
+            font-size: 3rem;
+            color: #2ecc71;
+            margin-bottom: 1rem;
+        }
+
+        .success-message h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .success-message p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .sale-summary {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .sale-summary h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .summary-item {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .summary-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-item h3 {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-item p {
+            color: #2c3e50;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .past-sales {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .past-sales h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .sale-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .sale-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sale-header {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: white;
+        }
+
+        .sale-header:hover {
+            background: #f1f3f5;
+        }
+
+        .sale-info {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .sale-info h3 {
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .sale-info p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .sale-amount {
+            color: #2ecc71;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .sale-details {
+            padding: 1rem;
+            background: #f8f9fa;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .sale-details.active {
+            display: block;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .detail-item h4 {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item p {
+            color: #2c3e50;
+            font-size: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #2c3e50;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .sale-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if messages %}
+        <div class="success-message">
+            <i class="fas fa-check-circle"></i>
+            <h1>Sale Successful!</h1>
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="sale-summary">
+            <h2>Latest Sale Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h3>Property Type</h3>
+                    <p>{{ latest_sale.property_listing.property_type }}</p>
+                </div>
+                <div class="summary-item">
+                    <h3>Location</h3>
+                    <p>{{ latest_sale.property_listing.location }}</p>
+                </div>
+                <div class="summary-item">
+                    <h3>Sale Price</h3>
+                    <p>${{ latest_sale.sale_price|floatformat:2 }}</p>
+                </div>
+                <div class="summary-item">
+                    <h3>Profit</h3>
+                    <p>${{ latest_sale.profit_amount|floatformat:2 }}</p>
+                </div>
+                <div class="summary-item">
+                    <h3>Sale Date</h3>
+                    <p>{{ latest_sale.sale_date|date:"F d, Y" }}</p>
+                </div>
+                <div class="summary-item">
+                    <h3>Closing Date</h3>
+                    <p>{{ latest_sale.closing_date|date:"F d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="past-sales">
+            <h2>Past Sales</h2>
+            <div class="sale-list">
+                {% for sale in past_sales %}
+                <div class="sale-item">
+                    <div class="sale-header" onclick="toggleDetails(this)">
+                        <div class="sale-info">
+                            <h3>{{ sale.property_listing.property_type }} - {{ sale.property_listing.location }}</h3>
+                            <p>{{ sale.sale_date|date:"F d, Y" }}</p>
+                        </div>
+                        <div class="sale-amount">${{ sale.sale_price|floatformat:2 }}</div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="sale-details">
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <h4>Buyer</h4>
+                                <p>{{ sale.buyer_name }}</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Payment Method</h4>
+                                <p>{{ sale.payment_method }}</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Legal Fees</h4>
+                                <p>${{ sale.legal_fees|floatformat:2 }}</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Title Insurance</h4>
+                                <p>${{ sale.title_insurance|floatformat:2 }}</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Deposit</h4>
+                                <p>${{ sale.deposit|floatformat:2 }}</p>
+                            </div>
+                            <div class="detail-item">
+                                <h4>Profit</h4>
+                                <p>${{ sale.profit_amount|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{% url 'property_list' %}" class="btn btn-primary">
+                <i class="fas fa-home"></i>
+                Back to Properties
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-chart-line"></i>
+                Go to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleDetails(element) {
+            const details = element.nextElementSibling;
+            const icon = element.querySelector('.fa-chevron-down');
+            
+            details.classList.toggle('active');
+            icon.style.transform = details.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
+        }
+    </script>
+</body>
+</html>

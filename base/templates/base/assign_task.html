@@ -1,0 +1,434 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="task-management-container">
+    <!-- Header Section -->
+    <div class="page-header">
+        <h1>Task Management</h1>
+        <p class="subtitle">Assign and manage tasks for your team</p>
+    </div>
+
+    <!-- Messages Section -->
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} notification">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Assign Task Form -->
+        <div class="form-card">
+            <div class="card-header">
+                <h2>Assign New Task</h2>
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <form method="post" class="task-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="predefined_task">Select Task</label>
+                    <select name="predefined_task_id" id="predefined_task" required>
+                        <option value="" disabled selected>Choose a task type</option>
+                        {% for task in predefined_tasks %}
+                            <option value="{{ task.id }}">{{ task.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="employee">Assign to Agent</label>
+                    <select name="employee_id" id="employee" required>
+                        <option value="" disabled selected>Select an agent</option>
+                        {% for agent in agents %}
+                            <option value="{{ agent.id }}">{{ agent.user.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="due_date">Due Date</label>
+                    <input type="date" name="due_date" id="due_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Task Description</label>
+                    <textarea name="description" id="description" rows="4" placeholder="Enter specific details about this task..." required></textarea>
+                </div>
+
+                <button type="submit" class="submit-button">
+                    <i class="fas fa-check"></i>
+                    Assign Task
+                </button>
+            </form>
+        </div>
+
+        <!-- Assigned Tasks List -->
+        <div class="tasks-card">
+            <div class="card-header">
+                <h2>Assigned Tasks</h2>
+                <i class="fas fa-list"></i>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Assigned To</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in assigned_tasks %}
+                            <tr>
+                                <td>{{ task.predefined_task }}</td>
+                                <td>{{ task.assigned_to.user.get_full_name }}</td>
+                                <td>{{ task.due_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="status-badge {{ task.status|lower }}">{{ task.status }}</span>
+                                </td>
+                                <td class="actions">
+                                    <a href="{% url 'edit_task' task.id %}" class="action-button edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{% url 'delete_task' task.id %}" method="post" class="delete-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-button delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="no-data">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>No tasks have been assigned yet</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .task-management-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        background-color: #f8f9fa;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .messages-container {
+        margin-bottom: 2rem;
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1000;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        animation: slideIn 0.3s ease-out;
+        transition: opacity 0.3s ease-out;
+    }
+
+    .alert.fade-out {
+        opacity: 0;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .alert-success {
+        background-color: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    .alert-error {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 2rem;
+    }
+
+    .form-card, .tasks-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-header h2 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.5rem;
+    }
+
+    .card-header i {
+        font-size: 1.5rem;
+        color: #6c757d;
+    }
+
+    .task-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        color: #4b5563;
+        font-weight: 500;
+    }
+
+    .form-group select,
+    .form-group input {
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #2c3e50;
+        background-color: #f8f9fa;
+        transition: border-color 0.2s;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group textarea {
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #2c3e50;
+        background-color: #f8f9fa;
+        transition: border-color 0.2s;
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .submit-button {
+        background-color: #3b82f6;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: background-color 0.2s;
+    }
+
+    .submit-button:hover {
+        background-color: #2563eb;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .data-table th {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .data-table tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-badge.pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.completed {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-badge.overdue {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-button {
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-button.edit {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .action-button.delete {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .action-button:hover {
+        opacity: 0.8;
+    }
+
+    .delete-form {
+        margin: 0;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+
+    .no-data i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #9ca3af;
+    }
+
+    .no-data p {
+        margin: 0;
+        font-style: italic;
+    }
+
+    @media (max-width: 1024px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .task-management-container {
+            padding: 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .card-header h2 {
+            font-size: 1.25rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all notifications
+        const notifications = document.querySelectorAll('.notification');
+        
+        notifications.forEach(notification => {
+            // Add fade-out class after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                
+                // Remove the notification from DOM after fade-out animation
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
+        });
+    });
+</script>
+{% endblock %}
